@@ -1,0 +1,440 @@
+<!--
+  Kando Onboarding Wizard - Departments
+  Self-contained: inline CSS + vanilla JS, no external dependencies.
+-->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Kando · Departments Setup</title>
+  <style>
+    :root {
+      --teal: #20c997;
+      --teal-dark: #17a882;
+      --ink: #2c3e50;
+      --white: #ffffff;
+      --border: rgba(60, 60, 60, 0.12);
+      --gray-bg: #f7f9fb;
+      --gray-text: #6b7785;
+      --error: #e03131;
+      --radius: 12px;
+      --shadow: 0 10px 30px rgba(44, 62, 80, 0.08);
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+      background: var(--gray-bg);
+      color: var(--ink);
+      line-height: 1.5;
+      min-height: 100vh;
+      display: flex;
+      align-items: flex-start;
+      justify-content: center;
+      padding: 48px 20px;
+    }
+    .wizard {
+      width: 100%;
+      max-width: 780px;
+      background: var(--white);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      overflow: hidden;
+    }
+    .wizard-header { padding: 32px 40px 24px; border-bottom: 1px solid var(--border); }
+    .brand {
+      display: flex; align-items: center; gap: 10px;
+      font-weight: 700; font-size: 15px; letter-spacing: 0.02em;
+      color: var(--teal); margin-bottom: 18px;
+    }
+    .brand-dot {
+      width: 26px; height: 26px; background: var(--teal); border-radius: 8px;
+      display: inline-flex; align-items: center; justify-content: center;
+      color: #fff; font-size: 15px;
+    }
+    .wizard-title {
+      display: flex; align-items: center; gap: 12px;
+      font-size: 24px; font-weight: 700; color: var(--ink);
+    }
+    .wizard-title .emoji { font-size: 28px; }
+
+    .progress-wrap { padding: 24px 40px 0; }
+    .progress-label { font-size: 13px; font-weight: 600; color: var(--gray-text); margin-bottom: 8px; }
+    .progress-track { height: 8px; background: #eef1f4; border-radius: 100px; overflow: hidden; }
+    .progress-fill {
+      height: 100%; background: var(--teal); width: 25%; border-radius: 100px;
+      transition: width 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    .wizard-body { padding: 32px 40px; min-height: 320px; }
+    .step { animation: fadeIn 0.3s ease; }
+    @keyframes fadeIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+    .step-heading { font-size: 20px; font-weight: 700; margin-bottom: 10px; }
+    .step-sub { color: var(--gray-text); font-size: 15px; margin-bottom: 24px; }
+
+    .intro-illustration { font-size: 56px; text-align: center; margin: 8px 0 20px; }
+    .intro-card {
+      background: var(--gray-bg); border: 1px solid var(--border);
+      border-radius: var(--radius); padding: 20px 24px; margin-top: 16px;
+    }
+    .intro-card ul { list-style: none; }
+    .intro-card li { display: flex; gap: 10px; padding: 6px 0; font-size: 14px; color: var(--ink); }
+    .intro-card li::before { content: "✓"; color: var(--teal); font-weight: 700; }
+
+    /* ---------- Dept cards ---------- */
+    .toolbar {
+      display: flex; justify-content: space-between; align-items: center;
+      margin-bottom: 14px; flex-wrap: wrap; gap: 10px;
+    }
+    .count-pill {
+      background: rgba(32, 201, 151, 0.12); color: var(--teal-dark);
+      padding: 5px 14px; border-radius: 100px; font-size: 13px; font-weight: 600;
+    }
+    .dept-card {
+      border: 1px solid var(--border); border-radius: var(--radius);
+      padding: 18px 20px; margin-bottom: 14px; transition: opacity 0.2s;
+    }
+    .dept-card.inactive { opacity: 0.5; }
+    .dept-card-head {
+      display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px;
+    }
+    .dept-num { font-size: 12px; font-weight: 700; color: var(--teal-dark); text-transform: uppercase; letter-spacing: 0.04em; }
+    .dept-card-actions { display: flex; align-items: center; gap: 14px; }
+    .remove-dept { background: none; border: none; color: var(--error); cursor: pointer; font-size: 18px; line-height: 1; }
+    .dept-fields { display: grid; grid-template-columns: 1fr 1.4fr; gap: 14px; }
+    .dept-fields .field { margin-bottom: 0; }
+    .dept-fields .field label { display: block; font-size: 12px; font-weight: 600; color: var(--gray-text); margin-bottom: 6px; }
+    .dept-fields .field input, .dept-fields .field textarea {
+      width: 100%; padding: 10px 12px; font-family: inherit; font-size: 14px;
+      color: var(--ink); background: var(--white);
+      border: 1.5px solid var(--border); border-radius: 8px; resize: vertical;
+    }
+    .dept-fields .field input:focus, .dept-fields .field textarea:focus {
+      outline: none; border-color: var(--teal); box-shadow: 0 0 0 4px rgba(32, 201, 151, 0.12);
+    }
+    .dept-fields .field.invalid input { border-color: var(--error); }
+    .full-row { grid-column: 1 / -1; }
+
+    .toggle-wrap { display: flex; align-items: center; gap: 10px; flex-shrink: 0; }
+    .toggle-label { font-size: 12px; color: var(--gray-text); font-weight: 600; white-space: nowrap; }
+    .toggle {
+      appearance: none; -webkit-appearance: none;
+      width: 40px; height: 22px; border-radius: 100px;
+      background: #cbd3da; position: relative; cursor: pointer;
+      transition: background 0.25s; flex-shrink: 0;
+    }
+    .toggle::after {
+      content: ""; position: absolute; top: 2px; left: 2px;
+      width: 18px; height: 18px; background: #fff; border-radius: 50%;
+      transition: transform 0.25s; box-shadow: 0 1px 3px rgba(0,0,0,0.2);
+    }
+    .toggle:checked { background: var(--teal); }
+    .toggle:checked::after { transform: translateX(18px); }
+
+    .btn-add-dept {
+      width: 100%; padding: 14px; border: 1.5px dashed var(--border); background: var(--gray-bg);
+      border-radius: 10px; color: var(--teal-dark); font-weight: 600; font-size: 14px;
+      cursor: pointer; transition: all 0.2s;
+    }
+    .btn-add-dept:hover { border-color: var(--teal); background: rgba(32,201,151,0.06); }
+
+    /* ---------- Manager assignment ---------- */
+    .manager-row {
+      display: flex; align-items: center; gap: 16px; padding: 16px 18px;
+      border: 1px solid var(--border); border-radius: var(--radius); margin-bottom: 12px;
+    }
+    .manager-row .dept-label { flex: 0 0 200px; font-weight: 600; font-size: 14px; }
+    .manager-row select {
+      flex: 1; padding: 10px 12px; font-family: inherit; font-size: 14px;
+      color: var(--ink); background: var(--white);
+      border: 1.5px solid var(--border); border-radius: 8px;
+    }
+    .manager-row select:focus { outline: none; border-color: var(--teal); box-shadow: 0 0 0 4px rgba(32,201,151,0.12); }
+
+    /* ---------- Preview ---------- */
+    .done-illustration { font-size: 56px; text-align: center; margin: 12px 0; }
+    .dept-summary-table { border: 1px solid var(--border); border-radius: var(--radius); overflow: hidden; }
+    .dept-summary-table table { width: 100%; border-collapse: collapse; font-size: 14px; }
+    .dept-summary-table th {
+      text-align: left; background: var(--gray-bg); padding: 12px 16px; font-size: 12px;
+      color: var(--gray-text); text-transform: uppercase; letter-spacing: 0.03em; font-weight: 700;
+    }
+    .dept-summary-table td { padding: 12px 16px; border-top: 1px solid var(--border); }
+    .badge { font-size: 12px; font-weight: 700; padding: 3px 10px; border-radius: 100px; }
+    .badge-yes { background: rgba(32,201,151,0.12); color: var(--teal-dark); }
+    .badge-no { background: #eef1f4; color: var(--gray-text); }
+    .muted { color: var(--gray-text); }
+    .success-banner {
+      display: none; background: rgba(32, 201, 151, 0.12); color: var(--teal-dark);
+      border: 1px solid rgba(32, 201, 151, 0.3); border-radius: 10px;
+      padding: 14px 18px; font-weight: 600; font-size: 14px; margin-top: 16px; text-align: center;
+    }
+
+    /* ---------- Footer ---------- */
+    .wizard-footer {
+      display: flex; justify-content: space-between; gap: 14px;
+      padding: 20px 40px 32px; border-top: 1px solid var(--border);
+    }
+    .btn {
+      padding: 12px 28px; font-family: inherit; font-size: 15px; font-weight: 600;
+      border-radius: 10px; border: 1.5px solid transparent; cursor: pointer;
+      transition: background 0.2s, border-color 0.2s, opacity 0.2s;
+    }
+    .btn-primary { background: var(--teal); color: #fff; }
+    .btn-primary:hover { background: var(--teal-dark); }
+    .btn-primary:disabled { background: #cbd3da; cursor: not-allowed; }
+    .btn-secondary { background: var(--white); color: var(--gray-text); border-color: var(--border); }
+    .btn-secondary:hover { background: var(--gray-bg); }
+    .btn-secondary:disabled { opacity: 0.4; cursor: not-allowed; }
+    .btn-link {
+      background: transparent; color: var(--teal); border: none; font-size: 14px;
+      padding: 10px 0; cursor: pointer; text-decoration: none; transition: color 0.2s;
+    }
+    .btn-link:hover { color: var(--teal-dark); text-decoration: underline; }
+
+    @media (max-width: 768px) {
+      body { padding: 24px 12px; }
+      .wizard-header, .wizard-body, .wizard-footer, .progress-wrap { padding-left: 24px; padding-right: 24px; }
+      .dept-fields { grid-template-columns: 1fr; }
+      .manager-row { flex-direction: column; align-items: stretch; gap: 8px; }
+      .manager-row .dept-label { flex: none; }
+    }
+    @media (max-width: 480px) {
+      .wizard-footer { flex-direction: column-reverse; }
+      .btn { width: 100%; }
+      .wizard-title { font-size: 20px; }
+      .dept-card-head { flex-wrap: wrap; gap: 10px; }
+    }
+  </style>
+</head>
+<body>
+  <main class="wizard" role="form" aria-label="Departments Setup Wizard">
+    <header class="wizard-header">
+      <div class="brand"><span class="brand-dot">K</span> KANDO HRMS</div>
+      <h1 class="wizard-title"><span class="emoji">🏢</span> Departments Setup</h1>
+    </header>
+
+    <div class="progress-wrap">
+      <div class="progress-label" id="progressLabel">Step 1 of 4</div>
+      <div class="progress-track"><div class="progress-fill" id="progressFill"></div></div>
+    </div>
+
+    <section class="wizard-body" id="wizardBody"></section>
+
+    <footer class="wizard-footer">
+      <button class="btn btn-link" onclick="backToHub()" title="Return to wizard selection">↩ Back to Hub</button>
+      <div style="display: flex; gap: 8px;">
+        <button class="btn btn-secondary" id="backBtn" disabled>← Back</button>
+        <button class="btn btn-primary" id="nextBtn">Next →</button>
+      </div>
+    </footer>
+  </main>
+
+  <script>
+    /* =========================================================
+       Departments Wizard
+       ========================================================= */
+    const TOTAL_STEPS = 4;
+    let currentStep = 1;
+
+    const EMPLOYEES = [
+      'Maria Santos', 'Juan Dela Cruz', 'Angela Reyes', 'Mark Villanueva',
+      'Kristine Bautista', 'Paolo Garcia', 'Liza Fernandez', 'Ramon Torres'
+    ];
+
+    function newDept() {
+      return { name: '', description: '', managerIdx: '', active: true };
+    }
+
+    const data = {
+      departments: [
+        { name: 'Human Resources', description: 'Manages recruitment, employee relations, and HR policy.', managerIdx: '', active: true },
+        { name: 'Finance', description: 'Oversees payroll, accounting, and financial reporting.', managerIdx: '', active: true },
+        { name: 'Operations', description: 'Runs day-to-day business operations and logistics.', managerIdx: '', active: true }
+      ]
+    };
+
+    const body = document.getElementById('wizardBody');
+    const backBtn = document.getElementById('backBtn');
+    const nextBtn = document.getElementById('nextBtn');
+    const progressFill = document.getElementById('progressFill');
+    const progressLabel = document.getElementById('progressLabel');
+
+    function backToHub() { window.location.href = 'index.html'; }
+    function escapeHtml(s) {
+      return String(s).replace(/[&<>"']/g, c => ({
+        '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
+      }[c]));
+    }
+
+    /* ----- Step 1: Welcome ----- */
+    function renderStep1() {
+      return `
+        <div class="step">
+          <div class="intro-illustration">🏢</div>
+          <h2 class="step-heading">Set Up Your Departments</h2>
+          <p class="step-sub">Departments help you organize employees, route approvals, and generate reports by team. You can always add, rename, or archive departments later.</p>
+          <div class="intro-card">
+            <ul>
+              <li>Create the departments in your organization</li>
+              <li>Assign a manager to each one (optional)</li>
+              <li>Mark departments active or inactive</li>
+            </ul>
+          </div>
+        </div>`;
+    }
+
+    /* ----- Step 2: Create departments ----- */
+    function renderStep2() {
+      const cards = data.departments.map((d, i) => `
+        <div class="dept-card ${d.active ? '' : 'inactive'}" data-idx="${i}">
+          <div class="dept-card-head">
+            <span class="dept-num">Department ${i + 1}</span>
+            <div class="dept-card-actions">
+              <div class="toggle-wrap">
+                <span class="toggle-label">Active</span>
+                <input type="checkbox" class="toggle" data-role="active" data-idx="${i}" ${d.active ? 'checked' : ''} />
+              </div>
+              <button class="remove-dept" data-role="remove" data-idx="${i}" title="Remove department" ${data.departments.length <= 1 ? 'disabled style="opacity:.3;cursor:not-allowed;"' : ''}>×</button>
+            </div>
+          </div>
+          <div class="dept-fields">
+            <div class="field" data-field="name-${i}">
+              <label>Department Name <span style="color:var(--error)">*</span></label>
+              <input type="text" data-role="name" data-idx="${i}" value="${escapeHtml(d.name)}" placeholder="e.g., Sales" />
+            </div>
+            <div class="field full-row" data-field="desc-${i}">
+              <label>Description</label>
+              <textarea rows="2" data-role="description" data-idx="${i}" placeholder="What does this department do?">${escapeHtml(d.description)}</textarea>
+            </div>
+          </div>
+        </div>`).join('');
+      return `
+        <div class="step">
+          <h2 class="step-heading">Create Departments</h2>
+          <p class="step-sub">Add each department in your organization. We've pre-filled a few common ones to get you started.</p>
+          <div class="toolbar">
+            <span class="count-pill" id="countPill">${data.departments.length} department${data.departments.length === 1 ? '' : 's'}</span>
+          </div>
+          ${cards}
+          <button class="btn-add-dept" id="addDeptBtn">+ Add Another Department</button>
+        </div>`;
+    }
+
+    function wireStep2() {
+      body.querySelectorAll('[data-role="name"]').forEach(el => {
+        el.addEventListener('input', () => { data.departments[+el.dataset.idx].name = el.value; updateNextState(); });
+      });
+      body.querySelectorAll('[data-role="description"]').forEach(el => {
+        el.addEventListener('input', () => { data.departments[+el.dataset.idx].description = el.value; });
+      });
+      body.querySelectorAll('[data-role="active"]').forEach(el => {
+        el.addEventListener('change', () => { data.departments[+el.dataset.idx].active = el.checked; render(); });
+      });
+      body.querySelectorAll('[data-role="remove"]').forEach(el => {
+        el.addEventListener('click', () => {
+          if (data.departments.length <= 1) return;
+          data.departments.splice(+el.dataset.idx, 1);
+          render();
+        });
+      });
+      document.getElementById('addDeptBtn').addEventListener('click', () => {
+        data.departments.push(newDept());
+        render();
+      });
+    }
+
+    function isStep2Valid() {
+      return data.departments.length > 0 && data.departments.every(d => d.name.trim().length > 0);
+    }
+
+    /* ----- Step 3: Assign managers ----- */
+    function renderStep3() {
+      const rows = data.departments.map((d, i) => `
+        <div class="manager-row">
+          <span class="dept-label">${escapeHtml(d.name || `Department ${i + 1}`)}</span>
+          <select data-idx="${i}">
+            <option value="">No manager assigned</option>
+            ${EMPLOYEES.map((name, ei) => `<option value="${ei}" ${String(d.managerIdx) === String(ei) ? 'selected' : ''}>${escapeHtml(name)}</option>`).join('')}
+          </select>
+        </div>`).join('');
+      return `
+        <div class="step">
+          <h2 class="step-heading">Assign Managers</h2>
+          <p class="step-sub">Optionally assign a manager to each department. This can be changed anytime from department settings.</p>
+          ${rows}
+        </div>`;
+    }
+
+    function wireStep3() {
+      body.querySelectorAll('.manager-row select').forEach(sel => {
+        sel.addEventListener('change', () => {
+          data.departments[+sel.dataset.idx].managerIdx = sel.value;
+        });
+      });
+    }
+
+    /* ----- Step 4: Review & confirm ----- */
+    function renderStep4() {
+      const rows = data.departments.map(d => `
+        <tr>
+          <td><strong>${escapeHtml(d.name)}</strong></td>
+          <td class="${d.description ? '' : 'muted'}">${d.description ? escapeHtml(d.description) : 'No description'}</td>
+          <td class="${d.managerIdx !== '' ? '' : 'muted'}">${d.managerIdx !== '' ? escapeHtml(EMPLOYEES[+d.managerIdx]) : 'Unassigned'}</td>
+          <td><span class="badge ${d.active ? 'badge-yes' : 'badge-no'}">${d.active ? 'Active' : 'Inactive'}</span></td>
+        </tr>`).join('');
+      return `
+        <div class="step">
+          <div class="done-illustration">📋</div>
+          <h2 class="step-heading">Review &amp; Confirm</h2>
+          <p class="step-sub">You're creating <strong>${data.departments.length} department${data.departments.length === 1 ? '' : 's'}</strong>. Review the details below.</p>
+          <div class="dept-summary-table">
+            <table>
+              <thead><tr><th>Department</th><th>Description</th><th>Manager</th><th>Status</th></tr></thead>
+              <tbody>${rows}</tbody>
+            </table>
+          </div>
+          <div class="success-banner" id="successBanner">🎉 Departments created successfully!</div>
+        </div>`;
+    }
+
+    /* ----- Render controller ----- */
+    function render() {
+      if (currentStep === 1) body.innerHTML = renderStep1();
+      else if (currentStep === 2) { body.innerHTML = renderStep2(); wireStep2(); }
+      else if (currentStep === 3) { body.innerHTML = renderStep3(); wireStep3(); }
+      else body.innerHTML = renderStep4();
+
+      progressFill.style.width = (currentStep / TOTAL_STEPS * 100) + '%';
+      progressLabel.textContent = `Step ${currentStep} of ${TOTAL_STEPS}`;
+
+      backBtn.disabled = currentStep === 1;
+      nextBtn.textContent = currentStep === TOTAL_STEPS ? 'Confirm & Create' : 'Next →';
+      updateNextState();
+    }
+
+    function updateNextState() {
+      if (currentStep === 2) nextBtn.disabled = !isStep2Valid();
+      else nextBtn.disabled = false;
+    }
+
+    /* ----- Navigation ----- */
+    nextBtn.addEventListener('click', () => {
+      if (currentStep === 2 && !isStep2Valid()) return;
+      if (currentStep === TOTAL_STEPS) {
+        const banner = document.getElementById('successBanner');
+        if (banner) banner.style.display = 'block';
+        nextBtn.disabled = true;
+        nextBtn.textContent = 'Created ✓';
+        return;
+      }
+      currentStep++;
+      render();
+    });
+    backBtn.addEventListener('click', () => { if (currentStep > 1) { currentStep--; render(); } });
+
+    render();
+  </script>
+</body>
+</html>

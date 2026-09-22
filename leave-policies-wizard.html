@@ -1,0 +1,570 @@
+<!--
+  Kando Onboarding Wizard - Leave Policies
+  Self-contained: inline CSS + vanilla JS, no external dependencies.
+-->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Kando · Leave Policies Setup</title>
+  <style>
+    :root {
+      --teal: #20c997;
+      --teal-dark: #17a882;
+      --ink: #2c3e50;
+      --white: #ffffff;
+      --border: rgba(60, 60, 60, 0.12);
+      --gray-bg: #f7f9fb;
+      --gray-text: #6b7785;
+      --error: #e03131;
+      --info: #2f6fb0;
+      --info-bg: #eaf2fb;
+      --radius: 12px;
+      --shadow: 0 10px 30px rgba(44, 62, 80, 0.08);
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+      background: var(--gray-bg);
+      color: var(--ink);
+      line-height: 1.5;
+      min-height: 100vh;
+      display: flex;
+      align-items: flex-start;
+      justify-content: center;
+      padding: 48px 20px;
+    }
+    .wizard {
+      width: 100%;
+      max-width: 760px;
+      background: var(--white);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      overflow: hidden;
+    }
+    .wizard-header { padding: 32px 40px 24px; border-bottom: 1px solid var(--border); }
+    .brand {
+      display: flex; align-items: center; gap: 10px;
+      font-weight: 700; font-size: 15px; letter-spacing: 0.02em;
+      color: var(--teal); margin-bottom: 18px;
+    }
+    .brand-dot {
+      width: 26px; height: 26px; background: var(--teal); border-radius: 8px;
+      display: inline-flex; align-items: center; justify-content: center;
+      color: #fff; font-size: 15px;
+    }
+    .wizard-title {
+      display: flex; align-items: center; gap: 12px;
+      font-size: 24px; font-weight: 700; color: var(--ink);
+    }
+    .wizard-title .emoji { font-size: 28px; }
+
+    .progress-wrap { padding: 24px 40px 0; }
+    .progress-label { font-size: 13px; font-weight: 600; color: var(--gray-text); margin-bottom: 8px; }
+    .progress-track { height: 8px; background: #eef1f4; border-radius: 100px; overflow: hidden; }
+    .progress-fill {
+      height: 100%; background: var(--teal); width: 20%; border-radius: 100px;
+      transition: width 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    .wizard-body { padding: 32px 40px; min-height: 320px; }
+    .step { animation: fadeIn 0.3s ease; }
+    @keyframes fadeIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+    .step-heading { font-size: 20px; font-weight: 700; margin-bottom: 10px; }
+    .step-sub { color: var(--gray-text); font-size: 15px; margin-bottom: 24px; }
+
+    .intro-illustration { font-size: 56px; text-align: center; margin: 8px 0 20px; }
+    .intro-card {
+      background: var(--gray-bg); border: 1px solid var(--border);
+      border-radius: var(--radius); padding: 20px 24px; margin-top: 16px;
+    }
+    .intro-card ul { list-style: none; }
+    .intro-card li { display: flex; gap: 10px; padding: 6px 0; font-size: 14px; color: var(--ink); }
+    .intro-card li::before { content: "✓"; color: var(--teal); font-weight: 700; }
+
+    /* ---------- Leave type select ---------- */
+    .leave-type-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; }
+    .leave-type-card {
+      border: 1.5px solid var(--border); border-radius: var(--radius);
+      padding: 16px 18px; cursor: pointer; transition: all 0.2s; position: relative;
+      display: flex; align-items: center; gap: 12px;
+    }
+    .leave-type-card:hover { border-color: var(--teal); background: var(--gray-bg); }
+    .leave-type-card.selected { border-color: var(--teal); background: rgba(32, 201, 151, 0.06); box-shadow: 0 0 0 3px rgba(32, 201, 151, 0.12); }
+    .leave-type-card .lt-icon { font-size: 22px; flex-shrink: 0; }
+    .leave-type-card .lt-name { font-weight: 600; font-size: 14px; }
+    .leave-type-card .lt-check {
+      position: absolute; top: 12px; right: 12px; width: 18px; height: 18px;
+      border-radius: 50%; border: 2px solid #cbd3da; display: flex; align-items: center; justify-content: center;
+      font-size: 11px; color: #fff; transition: all 0.2s;
+    }
+    .leave-type-card.selected .lt-check { background: var(--teal); border-color: var(--teal); }
+    .leave-type-card.selected .lt-check::after { content: "✓"; }
+
+    /* ---------- Method select ---------- */
+    .method-list { display: flex; flex-direction: column; gap: 12px; }
+    .method-card {
+      border: 1.5px solid var(--border); border-radius: var(--radius);
+      padding: 18px 20px; cursor: pointer; transition: all 0.2s; position: relative;
+    }
+    .method-card:hover { border-color: var(--teal); background: var(--gray-bg); }
+    .method-card.selected { border-color: var(--teal); background: rgba(32, 201, 151, 0.06); box-shadow: 0 0 0 3px rgba(32, 201, 151, 0.12); }
+    .method-card .m-name { font-weight: 700; font-size: 15px; margin-bottom: 4px; }
+    .method-card .m-desc { font-size: 13px; color: var(--gray-text); }
+    .method-card .m-check {
+      position: absolute; top: 18px; right: 18px; width: 20px; height: 20px;
+      border-radius: 50%; border: 2px solid #cbd3da; display: flex; align-items: center; justify-content: center;
+      font-size: 12px; color: #fff; transition: all 0.2s;
+    }
+    .method-card.selected .m-check { background: var(--teal); border-color: var(--teal); }
+    .method-card.selected .m-check::after { content: "✓"; }
+
+    /* ---------- Form ---------- */
+    .field { margin-bottom: 22px; }
+    .field label { display: block; font-size: 14px; font-weight: 600; margin-bottom: 8px; }
+    .req { color: var(--error); margin-left: 2px; }
+    .field input, .field select {
+      width: 100%; padding: 12px 14px; font-family: inherit; font-size: 15px;
+      color: var(--ink); background: var(--white);
+      border: 1.5px solid var(--border); border-radius: 10px;
+      transition: border-color 0.2s, box-shadow 0.2s;
+    }
+    .field input:focus, .field select:focus { outline: none; border-color: var(--teal); box-shadow: 0 0 0 4px rgba(32, 201, 151, 0.12); }
+    .field.invalid input { border-color: var(--error); }
+    .error-msg { display: none; color: var(--error); font-size: 13px; margin-top: 6px; }
+    .field.invalid .error-msg { display: block; }
+    .field-hint { font-size: 13px; color: var(--gray-text); margin-top: 6px; }
+    .field-row { display: flex; gap: 18px; }
+    .field-row .field { flex: 1; }
+
+    .preview-box {
+      background: var(--info-bg); border: 1px solid rgba(47, 111, 176, 0.25);
+      border-radius: var(--radius); padding: 20px 24px; text-align: center;
+    }
+    .preview-box .p-value { font-size: 28px; font-weight: 800; color: var(--info); margin-bottom: 4px; }
+    .preview-box .p-label { font-size: 13px; color: var(--ink); }
+
+    /* ---------- Preview / summary ---------- */
+    .done-illustration { font-size: 56px; text-align: center; margin: 12px 0; }
+    .summary {
+      border: 1px solid var(--border); border-radius: var(--radius); overflow: hidden;
+    }
+    .summary-row {
+      display: flex; justify-content: space-between; padding: 14px 20px;
+      border-bottom: 1px solid var(--border); font-size: 15px;
+    }
+    .summary-row:last-child { border-bottom: none; }
+    .summary-row .k { color: var(--gray-text); font-weight: 500; }
+    .summary-row .v { font-weight: 600; color: var(--ink); }
+    .summary-badge {
+      background: rgba(32, 201, 151, 0.12); color: var(--teal-dark);
+      padding: 3px 10px; border-radius: 100px; font-size: 13px; font-weight: 600;
+    }
+    .success-banner {
+      display: none; background: rgba(32, 201, 151, 0.12); color: var(--teal-dark);
+      border: 1px solid rgba(32, 201, 151, 0.3); border-radius: 10px;
+      padding: 14px 18px; font-weight: 600; font-size: 14px; margin-top: 16px; text-align: center;
+    }
+
+    /* ---------- Assign employees ---------- */
+    .assign-list { border: 1px solid var(--border); border-radius: var(--radius); overflow: hidden; }
+    .assign-item {
+      display: flex; align-items: center; gap: 12px; padding: 14px 18px;
+      border-bottom: 1px solid var(--border); transition: background 0.15s;
+    }
+    .assign-item:last-child { border-bottom: none; }
+    .assign-item:hover { background: var(--gray-bg); }
+    .checkbox {
+      appearance: none; -webkit-appearance: none;
+      width: 22px; height: 22px; flex-shrink: 0;
+      border: 2px solid #cbd3da; border-radius: 6px;
+      cursor: pointer; position: relative; transition: all 0.2s;
+    }
+    .checkbox:checked { background: var(--teal); border-color: var(--teal); }
+    .checkbox:checked::after {
+      content: ""; position: absolute; left: 6px; top: 2px;
+      width: 6px; height: 11px; border: solid #fff;
+      border-width: 0 2px 2px 0; transform: rotate(45deg);
+    }
+    .assign-avatar {
+      width: 34px; height: 34px; border-radius: 50%; background: var(--gray-bg);
+      display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 13px;
+      color: var(--teal-dark); flex-shrink: 0; border: 1px solid var(--border);
+    }
+    .assign-meta { flex: 1; min-width: 0; }
+    .assign-name { font-size: 14px; font-weight: 600; }
+    .assign-dept { font-size: 12px; color: var(--gray-text); }
+
+    /* ---------- Footer ---------- */
+    .wizard-footer {
+      display: flex; justify-content: space-between; gap: 14px;
+      padding: 20px 40px 32px; border-top: 1px solid var(--border);
+    }
+    .btn {
+      padding: 12px 28px; font-family: inherit; font-size: 15px; font-weight: 600;
+      border-radius: 10px; border: 1.5px solid transparent; cursor: pointer;
+      transition: background 0.2s, border-color 0.2s, opacity 0.2s;
+    }
+    .btn-primary { background: var(--teal); color: #fff; }
+    .btn-primary:hover { background: var(--teal-dark); }
+    .btn-primary:disabled { background: #cbd3da; cursor: not-allowed; }
+    .btn-secondary { background: var(--white); color: var(--gray-text); border-color: var(--border); }
+    .btn-secondary:hover { background: var(--gray-bg); }
+    .btn-secondary:disabled { opacity: 0.4; cursor: not-allowed; }
+    .btn-link {
+      background: transparent; color: var(--teal); border: none; font-size: 14px;
+      padding: 10px 0; cursor: pointer; text-decoration: none; transition: color 0.2s;
+    }
+    .btn-link:hover { color: var(--teal-dark); text-decoration: underline; }
+
+    @media (max-width: 768px) {
+      body { padding: 24px 12px; }
+      .wizard-header, .wizard-body, .wizard-footer, .progress-wrap { padding-left: 24px; padding-right: 24px; }
+      .field-row { flex-direction: column; gap: 0; }
+      .leave-type-grid { grid-template-columns: 1fr; }
+    }
+    @media (max-width: 480px) {
+      .wizard-footer { flex-direction: column-reverse; }
+      .btn { width: 100%; }
+      .wizard-title { font-size: 20px; }
+    }
+  </style>
+</head>
+<body>
+  <main class="wizard" role="form" aria-label="Leave Policies Setup Wizard">
+    <header class="wizard-header">
+      <div class="brand"><span class="brand-dot">K</span> KANDO HRMS</div>
+      <h1 class="wizard-title"><span class="emoji">📐</span> Leave Policies Setup</h1>
+    </header>
+
+    <div class="progress-wrap">
+      <div class="progress-label" id="progressLabel">Step 1 of 5</div>
+      <div class="progress-track"><div class="progress-fill" id="progressFill"></div></div>
+    </div>
+
+    <section class="wizard-body" id="wizardBody"></section>
+
+    <footer class="wizard-footer">
+      <button class="btn btn-link" onclick="backToHub()" title="Return to wizard selection">↩ Back to Hub</button>
+      <div style="display: flex; gap: 8px;">
+        <button class="btn btn-secondary" id="backBtn" disabled>← Back</button>
+        <button class="btn btn-primary" id="nextBtn">Next →</button>
+      </div>
+    </footer>
+  </main>
+
+  <script>
+    /* =========================================================
+       Leave Policies Wizard
+       ========================================================= */
+    const TOTAL_STEPS = 5;
+    let currentStep = 1;
+
+    const LEAVE_TYPES = [
+      { id: 'vacation', name: 'Vacation Leave', icon: '🏖️' },
+      { id: 'sick', name: 'Sick Leave', icon: '🤒' },
+      { id: 'bereavement', name: 'Bereavement Leave', icon: '🕊️' },
+      { id: 'emergency', name: 'Emergency Leave', icon: '🚨' },
+      { id: 'maternity', name: 'Maternity Leave', icon: '🤰' },
+      { id: 'paternity', name: 'Paternity Leave', icon: '👨‍🍼' },
+      { id: 'solo_parent', name: 'Solo Parent Leave', icon: '👪' },
+      { id: 'birthday', name: 'Birthday Leave', icon: '🎂' }
+    ];
+
+    const METHODS = {
+      monthly: { name: 'Monthly Accrual', desc: 'Employees earn a fixed number of days each month worked (e.g., 1.25 days/month).' },
+      annual: { name: 'Annual Fixed', desc: 'Employees receive a fixed number of days at the start of each year, no accrual.' },
+      hire: { name: 'Fixed at Hire', desc: 'Employees receive a fixed number of days once, upon their hire date.' }
+    };
+
+    const EMPLOYEES = [
+      { name: 'Maria Santos', dept: 'Finance' },
+      { name: 'Juan Dela Cruz', dept: 'Operations' },
+      { name: 'Angela Reyes', dept: 'Human Resources' },
+      { name: 'Mark Villanueva', dept: 'IT' },
+      { name: 'Kristine Bautista', dept: 'Sales' },
+      { name: 'Paolo Garcia', dept: 'Marketing' }
+    ];
+
+    const data = {
+      policyName: '',
+      leaveTypeId: '',
+      method: '',
+      rate: '',
+      effectiveDate: '',
+      assignAll: true,
+      assignedIdx: EMPLOYEES.map((_, i) => i)
+    };
+
+    const body = document.getElementById('wizardBody');
+    const backBtn = document.getElementById('backBtn');
+    const nextBtn = document.getElementById('nextBtn');
+    const progressFill = document.getElementById('progressFill');
+    const progressLabel = document.getElementById('progressLabel');
+
+    function backToHub() { window.location.href = 'index.html'; }
+    function escapeHtml(s) {
+      return String(s).replace(/[&<>"']/g, c => ({
+        '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
+      }[c]));
+    }
+    function initials(name) {
+      return name.split(' ').map(p => p[0]).slice(0, 2).join('').toUpperCase();
+    }
+    function selectedLeaveType() { return LEAVE_TYPES.find(l => l.id === data.leaveTypeId); }
+
+    function annualEquivalent() {
+      const r = parseFloat(data.rate);
+      if (isNaN(r)) return null;
+      if (data.method === 'monthly') return (r * 12);
+      return r;
+    }
+
+    /* ----- Step 1: Welcome ----- */
+    function renderStep1() {
+      return `
+        <div class="step">
+          <div class="intro-illustration">📐</div>
+          <h2 class="step-heading">Set Up Leave Accrual Policies</h2>
+          <p class="step-sub">A leave policy defines how employees earn or receive leave credits — monthly accrual, a fixed annual grant, or a one-time grant at hire. Kando uses this to automatically calculate balances.</p>
+          <div class="intro-card">
+            <ul>
+              <li>Choose which leave type this policy applies to</li>
+              <li>Pick an accrual method and set the rate</li>
+              <li>Preview the resulting annual balance before saving</li>
+            </ul>
+          </div>
+        </div>`;
+    }
+
+    /* ----- Step 2: Select leave type ----- */
+    function renderStep2() {
+      const cards = LEAVE_TYPES.map(l => `
+        <div class="leave-type-card ${data.leaveTypeId === l.id ? 'selected' : ''}" data-id="${l.id}">
+          <div class="lt-check"></div>
+          <span class="lt-icon">${l.icon}</span>
+          <span class="lt-name">${escapeHtml(l.name)}</span>
+        </div>`).join('');
+      return `
+        <div class="step">
+          <h2 class="step-heading">Select Leave Type</h2>
+          <p class="step-sub">Which leave type does this accrual policy apply to?</p>
+          <div class="leave-type-grid">${cards}</div>
+        </div>`;
+    }
+
+    function wireStep2() {
+      body.querySelectorAll('.leave-type-card').forEach(card => {
+        card.addEventListener('click', () => {
+          data.leaveTypeId = card.dataset.id;
+          if (!data.policyName) {
+            const lt = selectedLeaveType();
+            data.policyName = lt ? `${lt.name} Policy` : '';
+          }
+          render();
+        });
+      });
+    }
+
+    /* ----- Step 3: Choose accrual method ----- */
+    function renderStep3() {
+      const cards = Object.entries(METHODS).map(([key, m]) => `
+        <div class="method-card ${data.method === key ? 'selected' : ''}" data-key="${key}">
+          <div class="m-check"></div>
+          <div class="m-name">${escapeHtml(m.name)}</div>
+          <div class="m-desc">${escapeHtml(m.desc)}</div>
+        </div>`).join('');
+      return `
+        <div class="step">
+          <h2 class="step-heading">Choose Accrual Method</h2>
+          <p class="step-sub">How should leave credits be earned for <strong>${escapeHtml(selectedLeaveType()?.name || 'this leave type')}</strong>?</p>
+          <div class="method-list">${cards}</div>
+        </div>`;
+    }
+
+    function wireStep3() {
+      body.querySelectorAll('.method-card').forEach(card => {
+        card.addEventListener('click', () => {
+          data.method = card.dataset.key;
+          data.rate = '';
+          render();
+        });
+      });
+    }
+
+    /* ----- Step 4: Configure rate + preview ----- */
+    function renderStep4() {
+      const methodInfo = METHODS[data.method];
+      const rateLabel = data.method === 'monthly' ? 'Days per Month' : 'Days per Year';
+      const eq = annualEquivalent();
+      const previewText = eq !== null
+        ? (data.method === 'monthly'
+            ? `${data.rate} days/month = ${eq.toFixed(2)} days/year`
+            : `${eq.toFixed(2)} days/year`)
+        : 'Enter a rate to see the preview';
+      return `
+        <div class="step">
+          <h2 class="step-heading">Configure Rate</h2>
+          <p class="step-sub"><strong>${escapeHtml(methodInfo.name)}</strong> for ${escapeHtml(selectedLeaveType()?.name || 'this leave type')}.</p>
+
+          <div class="field" data-field="policyName">
+            <label>Policy Name <span class="req">*</span></label>
+            <input type="text" id="f_policyName" value="${escapeHtml(data.policyName)}" placeholder="e.g., Standard Vacation Accrual" />
+            <div class="error-msg">Please enter a policy name.</div>
+          </div>
+
+          <div class="field-row">
+            <div class="field" data-field="rate">
+              <label>${rateLabel} <span class="req">*</span></label>
+              <input type="number" id="f_rate" min="0" step="0.25" value="${escapeHtml(data.rate)}" placeholder="e.g., ${data.method === 'monthly' ? '1.25' : '15'}" />
+              <div class="error-msg">Please enter a valid rate.</div>
+            </div>
+            <div class="field" data-field="effectiveDate">
+              <label>Effective Date <span class="req">*</span></label>
+              <input type="date" id="f_effective" value="${data.effectiveDate}" />
+              <div class="error-msg">Please pick an effective date.</div>
+            </div>
+          </div>
+
+          <div class="preview-box">
+            <div class="p-value">${previewText}</div>
+            <div class="p-label">Estimated annual accrual for a full-year employee</div>
+          </div>
+        </div>`;
+    }
+
+    function wireStep4() {
+      ['f_policyName', 'f_rate', 'f_effective'].forEach(id => {
+        const el = document.getElementById(id);
+        el.addEventListener('input', () => { syncStep4(); updateNextState(); refreshPreview(); });
+        el.addEventListener('change', () => { syncStep4(); updateNextState(); refreshPreview(); });
+      });
+    }
+    function syncStep4() {
+      data.policyName = document.getElementById('f_policyName').value.trim();
+      data.rate = document.getElementById('f_rate').value;
+      data.effectiveDate = document.getElementById('f_effective').value;
+    }
+    function refreshPreview() {
+      const eq = annualEquivalent();
+      const box = body.querySelector('.preview-box .p-value');
+      if (!box) return;
+      box.textContent = eq !== null
+        ? (data.method === 'monthly' ? `${data.rate} days/month = ${eq.toFixed(2)} days/year` : `${eq.toFixed(2)} days/year`)
+        : 'Enter a rate to see the preview';
+    }
+    function isStep4Valid() {
+      const r = parseFloat(data.rate);
+      return data.policyName.trim().length > 0 && !isNaN(r) && r > 0 && data.effectiveDate !== '';
+    }
+
+    /* ----- Step 5: Assign + Preview ----- */
+    function renderStep5() {
+      const rows = EMPLOYEES.map((e, i) => `
+        <div class="assign-item">
+          <input type="checkbox" class="checkbox" data-idx="${i}" ${data.assignedIdx.includes(i) ? 'checked' : ''} />
+          <div class="assign-avatar">${initials(e.name)}</div>
+          <div class="assign-meta">
+            <div class="assign-name">${escapeHtml(e.name)}</div>
+            <div class="assign-dept">${escapeHtml(e.dept)}</div>
+          </div>
+        </div>`).join('');
+      const eq = annualEquivalent();
+      return `
+        <div class="step">
+          <div class="done-illustration">📋</div>
+          <h2 class="step-heading">Preview &amp; Assign</h2>
+          <p class="step-sub">Review the policy, then choose who it applies to.</p>
+          <div class="summary" style="margin-bottom: 22px;">
+            <div class="summary-row"><span class="k">Policy Name</span><span class="v">${escapeHtml(data.policyName)}</span></div>
+            <div class="summary-row"><span class="k">Leave Type</span><span class="summary-badge">${escapeHtml(selectedLeaveType()?.name || '—')}</span></div>
+            <div class="summary-row"><span class="k">Accrual Method</span><span class="v">${escapeHtml(METHODS[data.method]?.name || '—')}</span></div>
+            <div class="summary-row"><span class="k">Rate</span><span class="v">${escapeHtml(String(data.rate))} ${data.method === 'monthly' ? 'days/month' : 'days/year'}</span></div>
+            <div class="summary-row"><span class="k">Annual Equivalent</span><span class="v">${eq !== null ? eq.toFixed(2) + ' days/year' : '—'}</span></div>
+            <div class="summary-row"><span class="k">Effective Date</span><span class="v">${formatDate(data.effectiveDate)}</span></div>
+          </div>
+          <p class="step-sub" style="margin-bottom: 12px;">Assign to employees (${data.assignedIdx.length} selected)</p>
+          <div class="assign-list">${rows}</div>
+          <div class="success-banner" id="successBanner">🎉 Leave policy created and assigned successfully!</div>
+        </div>`;
+    }
+
+    function wireStep5() {
+      body.querySelectorAll('.assign-item input[type="checkbox"]').forEach(cb => {
+        cb.addEventListener('change', () => {
+          const idx = +cb.dataset.idx;
+          if (cb.checked) {
+            if (!data.assignedIdx.includes(idx)) data.assignedIdx.push(idx);
+          } else {
+            data.assignedIdx = data.assignedIdx.filter(i => i !== idx);
+          }
+          const label = body.querySelector('.step-sub[style]');
+          if (label) label.textContent = `Assign to employees (${data.assignedIdx.length} selected)`;
+        });
+      });
+    }
+
+    function formatDate(iso) {
+      if (!iso) return '—';
+      const d = new Date(iso + 'T00:00:00');
+      return d.toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
+    }
+
+    /* ----- Render controller ----- */
+    function render() {
+      if (currentStep === 1) body.innerHTML = renderStep1();
+      else if (currentStep === 2) { body.innerHTML = renderStep2(); wireStep2(); }
+      else if (currentStep === 3) { body.innerHTML = renderStep3(); wireStep3(); }
+      else if (currentStep === 4) { body.innerHTML = renderStep4(); wireStep4(); }
+      else { body.innerHTML = renderStep5(); wireStep5(); }
+
+      progressFill.style.width = (currentStep / TOTAL_STEPS * 100) + '%';
+      progressLabel.textContent = `Step ${currentStep} of ${TOTAL_STEPS}`;
+
+      backBtn.disabled = currentStep === 1;
+      nextBtn.textContent = currentStep === TOTAL_STEPS ? 'Confirm & Create' : 'Next →';
+      updateNextState();
+    }
+
+    function updateNextState() {
+      if (currentStep === 2) nextBtn.disabled = data.leaveTypeId === '';
+      else if (currentStep === 3) nextBtn.disabled = data.method === '';
+      else if (currentStep === 4) nextBtn.disabled = !isStep4Valid();
+      else nextBtn.disabled = false;
+    }
+
+    /* ----- Navigation ----- */
+    nextBtn.addEventListener('click', () => {
+      if (currentStep === 2 && data.leaveTypeId === '') return;
+      if (currentStep === 3 && data.method === '') return;
+      if (currentStep === 4) {
+        ['f_policyName', 'f_rate', 'f_effective'].forEach(id => {
+          const el = document.getElementById(id);
+          const key = id === 'f_policyName' ? 'policyName' : id === 'f_rate' ? 'rate' : 'effectiveDate';
+          const wrap = document.querySelector(`.field[data-field="${key}"]`);
+          let ok = true;
+          if (key === 'policyName') ok = data.policyName.trim().length > 0;
+          else if (key === 'rate') { const r = parseFloat(data.rate); ok = !isNaN(r) && r > 0; }
+          else if (key === 'effectiveDate') ok = data.effectiveDate !== '';
+          if (wrap) wrap.classList.toggle('invalid', !ok);
+        });
+        if (!isStep4Valid()) return;
+      }
+      if (currentStep === TOTAL_STEPS) {
+        const banner = document.getElementById('successBanner');
+        if (banner) banner.style.display = 'block';
+        nextBtn.disabled = true;
+        nextBtn.textContent = 'Created ✓';
+        return;
+      }
+      currentStep++;
+      render();
+    });
+    backBtn.addEventListener('click', () => { if (currentStep > 1) { currentStep--; render(); } });
+
+    render();
+  </script>
+</body>
+</html>

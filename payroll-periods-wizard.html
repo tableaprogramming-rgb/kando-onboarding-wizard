@@ -1,0 +1,552 @@
+<!--
+  Kando Onboarding Wizard - Payroll Periods
+  Self-contained: inline CSS + vanilla JS, no external dependencies.
+-->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Kando · Payroll Periods Setup</title>
+  <style>
+    /* ---------- Kando design tokens ---------- */
+    :root {
+      --teal: #20c997;
+      --teal-dark: #17a882;
+      --ink: #2c3e50;
+      --white: #ffffff;
+      --border: rgba(60, 60, 60, 0.12);
+      --gray-bg: #f7f9fb;
+      --gray-text: #6b7785;
+      --error: #e03131;
+      --radius: 12px;
+      --shadow: 0 10px 30px rgba(44, 62, 80, 0.08);
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+      background: var(--gray-bg);
+      color: var(--ink);
+      line-height: 1.5;
+      min-height: 100vh;
+      display: flex;
+      align-items: flex-start;
+      justify-content: center;
+      padding: 48px 20px;
+    }
+
+    .wizard {
+      width: 100%;
+      max-width: 720px;
+      background: var(--white);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      overflow: hidden;
+    }
+
+    /* ---------- Header ---------- */
+    .wizard-header {
+      padding: 32px 40px 24px;
+      border-bottom: 1px solid var(--border);
+    }
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-weight: 700;
+      font-size: 15px;
+      letter-spacing: 0.02em;
+      color: var(--teal);
+      margin-bottom: 18px;
+    }
+    .brand-dot {
+      width: 26px; height: 26px;
+      background: var(--teal);
+      border-radius: 8px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      color: #fff;
+      font-size: 15px;
+    }
+    .wizard-title {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      font-size: 24px;
+      font-weight: 700;
+      color: var(--ink);
+    }
+    .wizard-title .emoji { font-size: 28px; }
+
+    /* ---------- Progress ---------- */
+    .progress-wrap { padding: 24px 40px 0; }
+    .progress-label {
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--gray-text);
+      margin-bottom: 8px;
+    }
+    .progress-track {
+      height: 8px;
+      background: #eef1f4;
+      border-radius: 100px;
+      overflow: hidden;
+    }
+    .progress-fill {
+      height: 100%;
+      background: var(--teal);
+      width: 33.33%;
+      border-radius: 100px;
+      transition: width 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    /* ---------- Content ---------- */
+    .wizard-body { padding: 32px 40px; min-height: 280px; }
+    .step { animation: fadeIn 0.3s ease; }
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(8px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+    .step-heading { font-size: 20px; font-weight: 700; margin-bottom: 10px; }
+    .step-sub { color: var(--gray-text); font-size: 15px; margin-bottom: 24px; }
+
+    .intro-illustration {
+      font-size: 56px;
+      text-align: center;
+      margin: 8px 0 20px;
+    }
+    .intro-card {
+      background: var(--gray-bg);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 20px 24px;
+      margin-top: 16px;
+    }
+    .intro-card ul { list-style: none; }
+    .intro-card li {
+      display: flex;
+      gap: 10px;
+      padding: 6px 0;
+      font-size: 14px;
+      color: var(--ink);
+    }
+    .intro-card li::before { content: "✓"; color: var(--teal); font-weight: 700; }
+
+    /* ---------- Form ---------- */
+    .field { margin-bottom: 22px; }
+    .field label {
+      display: block;
+      font-size: 14px;
+      font-weight: 600;
+      margin-bottom: 8px;
+    }
+    .req { color: var(--error); margin-left: 2px; }
+    .field input,
+    .field select {
+      width: 100%;
+      padding: 12px 14px;
+      font-family: inherit;
+      font-size: 15px;
+      color: var(--ink);
+      background: var(--white);
+      border: 1.5px solid var(--border);
+      border-radius: 10px;
+      transition: border-color 0.2s, box-shadow 0.2s;
+    }
+    .field input:focus,
+    .field select:focus {
+      outline: none;
+      border-color: var(--teal);
+      box-shadow: 0 0 0 4px rgba(32, 201, 151, 0.12);
+    }
+    .field.invalid input,
+    .field.invalid select { border-color: var(--error); }
+    .error-msg {
+      display: none;
+      color: var(--error);
+      font-size: 13px;
+      margin-top: 6px;
+    }
+    .field.invalid .error-msg { display: block; }
+    .field-row { display: flex; gap: 18px; }
+    .field-row .field { flex: 1; }
+
+    /* ---------- Preview ---------- */
+    .summary {
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      overflow: hidden;
+    }
+    .summary-row {
+      display: flex;
+      justify-content: space-between;
+      padding: 14px 20px;
+      border-bottom: 1px solid var(--border);
+      font-size: 15px;
+    }
+    .summary-row:last-child { border-bottom: none; }
+    .summary-row .k { color: var(--gray-text); font-weight: 500; }
+    .summary-row .v { font-weight: 600; color: var(--ink); }
+    .summary-badge {
+      background: rgba(32, 201, 151, 0.12);
+      color: var(--teal-dark);
+      padding: 3px 10px;
+      border-radius: 100px;
+      font-size: 13px;
+      font-weight: 600;
+    }
+    .done-illustration { font-size: 56px; text-align: center; margin: 12px 0; }
+
+    /* ---------- Footer ---------- */
+    .wizard-footer {
+      display: flex;
+      justify-content: space-between;
+      gap: 14px;
+      padding: 20px 40px 32px;
+      border-top: 1px solid var(--border);
+    }
+    .btn {
+      padding: 12px 28px;
+      font-family: inherit;
+      font-size: 15px;
+      font-weight: 600;
+      border-radius: 10px;
+      border: 1.5px solid transparent;
+      cursor: pointer;
+      transition: background 0.2s, border-color 0.2s, opacity 0.2s;
+    }
+    .btn-primary { background: var(--teal); color: #fff; }
+    .btn-primary:hover { background: var(--teal-dark); }
+    .btn-primary:disabled {
+      background: #cbd3da;
+      cursor: not-allowed;
+    }
+    .btn-secondary {
+      background: var(--white);
+      color: var(--gray-text);
+      border-color: var(--border);
+    }
+    .btn-secondary:hover { background: var(--gray-bg); }
+    .btn-secondary:disabled { opacity: 0.4; cursor: not-allowed; }
+    .btn-link {
+      background: transparent;
+      color: var(--teal);
+      border: none;
+      font-size: 14px;
+      padding: 10px 0;
+      cursor: pointer;
+      text-decoration: none;
+      transition: color 0.2s;
+    }
+    .btn-link:hover { color: var(--teal-dark); text-decoration: underline; }
+
+    .success-banner {
+      display: none;
+      background: rgba(32, 201, 151, 0.12);
+      color: var(--teal-dark);
+      border: 1px solid rgba(32, 201, 151, 0.3);
+      border-radius: 10px;
+      padding: 14px 18px;
+      font-weight: 600;
+      font-size: 14px;
+      margin-top: 16px;
+      text-align: center;
+    }
+
+    /* ---------- Tooltip Pattern ---------- */
+    .field-help {
+      position: relative;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 18px;
+      height: 18px;
+      margin-left: 6px;
+      cursor: help;
+      font-size: 14px;
+      color: #2f6fb0;
+    }
+
+    .field-help:hover::after {
+      content: attr(data-tooltip);
+      position: absolute;
+      bottom: 120%;
+      left: 50%;
+      transform: translateX(-50%);
+      background: var(--ink);
+      color: var(--white);
+      padding: 8px 12px;
+      border-radius: 6px;
+      font-size: 13px;
+      white-space: nowrap;
+      z-index: 1000;
+      box-shadow: 0 4px 12px rgba(44, 62, 80, 0.15);
+    }
+
+    .field-help:hover::before {
+      content: '';
+      position: absolute;
+      bottom: 110%;
+      left: 50%;
+      transform: translateX(-50%);
+      border: 5px solid transparent;
+      border-top-color: var(--ink);
+      z-index: 1000;
+    }
+
+    /* ---------- Responsive ---------- */
+    @media (max-width: 768px) {
+      body { padding: 24px 12px; }
+      .wizard-header, .wizard-body, .wizard-footer, .progress-wrap { padding-left: 24px; padding-right: 24px; }
+      .field-row { flex-direction: column; gap: 0; }
+    }
+    @media (max-width: 480px) {
+      .wizard-footer { flex-direction: column-reverse; }
+      .btn { width: 100%; }
+      .wizard-title { font-size: 20px; }
+    }
+  </style>
+</head>
+<body>
+  <main class="wizard" role="form" aria-label="Payroll Periods Setup Wizard">
+    <!-- Header -->
+    <header class="wizard-header">
+      <div class="brand"><span class="brand-dot">K</span> KANDO HRMS</div>
+      <h1 class="wizard-title"><span class="emoji">💰</span> Payroll Periods Setup</h1>
+    </header>
+
+    <!-- Progress -->
+    <div class="progress-wrap">
+      <div class="progress-label" id="progressLabel">Step 1 of 3</div>
+      <div class="progress-track"><div class="progress-fill" id="progressFill"></div></div>
+    </div>
+
+    <!-- Body -->
+    <section class="wizard-body" id="wizardBody"></section>
+
+    <!-- Footer -->
+    <footer class="wizard-footer">
+      <button class="btn btn-link" onclick="backToHub()" title="Return to wizard selection">↩ Back to Hub</button>
+      <div style="display: flex; gap: 8px;">
+        <button class="btn btn-secondary" id="backBtn" disabled>← Back</button>
+        <button class="btn btn-primary" id="nextBtn">Next →</button>
+      </div>
+    </footer>
+  </main>
+
+  <script>
+    /* =========================================================
+       Payroll Periods Wizard - vanilla JS state machine
+       ========================================================= */
+    const TOTAL_STEPS = 3;
+    let currentStep = 1;
+
+    // In-memory data store (not persisted).
+    const data = {
+      name: '',
+      type: '',
+      startDate: '',
+      endDate: '',
+      payDay: ''
+    };
+
+    const body = document.getElementById('wizardBody');
+    const backBtn = document.getElementById('backBtn');
+
+    // Navigate back to the hub
+    function backToHub() {
+      window.location.href = 'index.html';
+    }
+    const nextBtn = document.getElementById('nextBtn');
+    const progressFill = document.getElementById('progressFill');
+    const progressLabel = document.getElementById('progressLabel');
+
+    /* ----- Step renderers ----- */
+    function renderStep1() {
+      return `
+        <div class="step">
+          <div class="intro-illustration">📅</div>
+          <h2 class="step-heading">Welcome to Payroll Periods</h2>
+          <p class="step-sub">A payroll period defines the window of time your employees are paid for. Kando uses these periods to calculate salaries, deductions, and generate payslips.</p>
+          <div class="intro-card">
+            <ul>
+              <li>Set consistent pay cycles (monthly, semi-monthly, and more)</li>
+              <li>Automate payslip generation for every period</li>
+              <li>Stay compliant with Philippine payroll requirements</li>
+            </ul>
+          </div>
+        </div>`;
+    }
+
+    function renderStep2() {
+      return `
+        <div class="step">
+          <h2 class="step-heading">Period Details</h2>
+          <p class="step-sub">Fill out the details for your first payroll period.</p>
+
+          <div class="field" data-field="name">
+            <label>Period Name <span class="field-help" data-tooltip="E.g., Monthly - Regular, Semi-Monthly (1st)">ℹ️</span><span class="req">*</span></label>
+            <input type="text" id="f_name" placeholder="e.g., Monthly - Regular" value="${data.name}" />
+            <div class="error-msg">Please enter a period name.</div>
+          </div>
+
+          <div class="field" data-field="type">
+            <label>Period Type <span class="field-help" data-tooltip="How often you pay employees: monthly, bi-weekly, weekly, etc.">ℹ️</span><span class="req">*</span></label>
+            <select id="f_type">
+              <option value="">Select a type…</option>
+              <option value="Monthly">Monthly</option>
+              <option value="Semi-monthly">Semi-monthly</option>
+              <option value="Bi-weekly">Bi-weekly</option>
+              <option value="Weekly">Weekly</option>
+            </select>
+            <div class="error-msg">Please choose a period type.</div>
+          </div>
+
+          <div class="field-row">
+            <div class="field" data-field="startDate">
+              <label>Start Date <span class="field-help" data-tooltip="First day of the payroll period">ℹ️</span><span class="req">*</span></label>
+              <input type="date" id="f_start" value="${data.startDate}" />
+              <div class="error-msg">Please pick a start date.</div>
+            </div>
+            <div class="field" data-field="endDate">
+              <label>End Date <span class="field-help" data-tooltip="Last day of the payroll period">ℹ️</span><span class="req">*</span></label>
+              <input type="date" id="f_end" value="${data.endDate}" />
+              <div class="error-msg">End date must be after the start date.</div>
+            </div>
+          </div>
+
+          <div class="field" data-field="payDay">
+            <label>Pay Day <span class="field-help" data-tooltip="Day of the month when employees get paid (1-31)">ℹ️</span><span class="req">*</span></label>
+            <input type="number" id="f_payday" min="1" max="31" placeholder="e.g., 25" value="${data.payDay}" />
+            <div class="error-msg">Enter a day between 1 and 31.</div>
+          </div>
+        </div>`;
+    }
+
+    function renderStep3() {
+      return `
+        <div class="step">
+          <div class="done-illustration">✅</div>
+          <h2 class="step-heading">Preview &amp; Confirm</h2>
+          <p class="step-sub">Review the payroll period below before creating it.</p>
+          <div class="summary">
+            <div class="summary-row"><span class="k">Period Name</span><span class="v">${escapeHtml(data.name)}</span></div>
+            <div class="summary-row"><span class="k">Period Type</span><span class="summary-badge">${escapeHtml(data.type)}</span></div>
+            <div class="summary-row"><span class="k">Start Date</span><span class="v">${formatDate(data.startDate)}</span></div>
+            <div class="summary-row"><span class="k">End Date</span><span class="v">${formatDate(data.endDate)}</span></div>
+            <div class="summary-row"><span class="k">Pay Day</span><span class="v">Day ${escapeHtml(data.payDay)} of the month</span></div>
+          </div>
+          <div class="success-banner" id="successBanner">🎉 Payroll period created successfully!</div>
+        </div>`;
+    }
+
+    /* ----- Helpers ----- */
+    function escapeHtml(s) {
+      return String(s).replace(/[&<>"']/g, c => ({
+        '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
+      }[c]));
+    }
+    function formatDate(iso) {
+      if (!iso) return '—';
+      const d = new Date(iso + 'T00:00:00');
+      return d.toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
+    }
+
+    /* ----- Render controller ----- */
+    function render() {
+      if (currentStep === 1) body.innerHTML = renderStep1();
+      else if (currentStep === 2) { body.innerHTML = renderStep2(); wireStep2(); }
+      else body.innerHTML = renderStep3();
+
+      // Progress bar + label
+      progressFill.style.width = (currentStep / TOTAL_STEPS * 100) + '%';
+      progressLabel.textContent = `Step ${currentStep} of ${TOTAL_STEPS}`;
+
+      // Footer buttons
+      backBtn.disabled = currentStep === 1;
+      nextBtn.textContent = currentStep === TOTAL_STEPS ? 'Confirm & Create' : 'Next →';
+      updateNextState();
+    }
+
+    /* ----- Step 2 wiring: live validation ----- */
+    function wireStep2() {
+      const inputs = ['f_name', 'f_type', 'f_start', 'f_end', 'f_payday'];
+      inputs.forEach(id => {
+        const el = document.getElementById(id);
+        el.addEventListener('input', () => { syncData(); updateNextState(); });
+        el.addEventListener('change', () => { syncData(); updateNextState(); });
+        el.addEventListener('blur', () => { syncData(); validateField(id); });
+      });
+    }
+
+    function syncData() {
+      data.name = document.getElementById('f_name').value.trim();
+      data.type = document.getElementById('f_type').value;
+      data.startDate = document.getElementById('f_start').value;
+      data.endDate = document.getElementById('f_end').value;
+      data.payDay = document.getElementById('f_payday').value;
+    }
+
+    // Validate a single field and toggle its error state.
+    function validateField(id) {
+      const map = { f_name: 'name', f_type: 'type', f_start: 'startDate', f_end: 'endDate', f_payday: 'payDay' };
+      const key = map[id];
+      const wrap = document.querySelector(`.field[data-field="${key}"]`);
+      if (!wrap) return true;
+      let ok = true;
+      if (key === 'name') ok = data.name.length > 0;
+      else if (key === 'type') ok = data.type !== '';
+      else if (key === 'startDate') ok = data.startDate !== '';
+      else if (key === 'endDate') ok = data.endDate !== '' && (!data.startDate || data.endDate > data.startDate);
+      else if (key === 'payDay') { const n = parseInt(data.payDay, 10); ok = n >= 1 && n <= 31; }
+      wrap.classList.toggle('invalid', !ok);
+      return ok;
+    }
+
+    // Whole-form validity (no error display) - drives the Next button.
+    function isStep2Valid() {
+      const n = parseInt(data.payDay, 10);
+      return data.name.length > 0 &&
+             data.type !== '' &&
+             data.startDate !== '' &&
+             data.endDate !== '' &&
+             data.endDate > data.startDate &&
+             n >= 1 && n <= 31;
+    }
+
+    function updateNextState() {
+      if (currentStep === 2) nextBtn.disabled = !isStep2Valid();
+      else nextBtn.disabled = false;
+    }
+
+    /* ----- Navigation ----- */
+    nextBtn.addEventListener('click', () => {
+      if (currentStep === 2) {
+        // Force-validate all fields for visible feedback.
+        ['f_name', 'f_type', 'f_start', 'f_end', 'f_payday'].forEach(validateField);
+        if (!isStep2Valid()) return;
+      }
+      if (currentStep === TOTAL_STEPS) {
+        const banner = document.getElementById('successBanner');
+        if (banner) banner.style.display = 'block';
+        nextBtn.disabled = true;
+        nextBtn.textContent = 'Created ✓';
+        return;
+      }
+      currentStep++;
+      render();
+    });
+
+    backBtn.addEventListener('click', () => {
+      if (currentStep > 1) { currentStep--; render(); }
+    });
+
+    // Initial paint
+    render();
+  </script>
+</body>
+</html>

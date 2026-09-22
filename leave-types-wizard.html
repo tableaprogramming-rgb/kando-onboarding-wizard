@@ -1,0 +1,458 @@
+<!--
+  Kando Onboarding Wizard - Leave Types
+  Self-contained: inline CSS + vanilla JS, no external dependencies.
+-->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Kando · Leave Types Setup</title>
+  <style>
+    :root {
+      --teal: #20c997;
+      --teal-dark: #17a882;
+      --ink: #2c3e50;
+      --white: #ffffff;
+      --border: rgba(60, 60, 60, 0.12);
+      --gray-bg: #f7f9fb;
+      --gray-text: #6b7785;
+      --error: #e03131;
+      --radius: 12px;
+      --shadow: 0 10px 30px rgba(44, 62, 80, 0.08);
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+      background: var(--gray-bg);
+      color: var(--ink);
+      line-height: 1.5;
+      min-height: 100vh;
+      display: flex;
+      align-items: flex-start;
+      justify-content: center;
+      padding: 48px 20px;
+    }
+    .wizard {
+      width: 100%;
+      max-width: 760px;
+      background: var(--white);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      overflow: hidden;
+    }
+    .wizard-header { padding: 32px 40px 24px; border-bottom: 1px solid var(--border); }
+    .brand {
+      display: flex; align-items: center; gap: 10px;
+      font-weight: 700; font-size: 15px; letter-spacing: 0.02em;
+      color: var(--teal); margin-bottom: 18px;
+    }
+    .brand-dot {
+      width: 26px; height: 26px; background: var(--teal); border-radius: 8px;
+      display: inline-flex; align-items: center; justify-content: center;
+      color: #fff; font-size: 15px;
+    }
+    .wizard-title {
+      display: flex; align-items: center; gap: 12px;
+      font-size: 24px; font-weight: 700; color: var(--ink);
+    }
+    .wizard-title .emoji { font-size: 28px; }
+
+    .progress-wrap { padding: 24px 40px 0; }
+    .progress-label { font-size: 13px; font-weight: 600; color: var(--gray-text); margin-bottom: 8px; }
+    .progress-track { height: 8px; background: #eef1f4; border-radius: 100px; overflow: hidden; }
+    .progress-fill {
+      height: 100%; background: var(--teal); width: 25%; border-radius: 100px;
+      transition: width 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    .wizard-body { padding: 32px 40px; min-height: 300px; }
+    .step { animation: fadeIn 0.3s ease; }
+    @keyframes fadeIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+    .step-heading { font-size: 20px; font-weight: 700; margin-bottom: 10px; }
+    .step-sub { color: var(--gray-text); font-size: 15px; margin-bottom: 24px; }
+
+    .intro-illustration { font-size: 56px; text-align: center; margin: 8px 0 20px; }
+    .intro-card {
+      background: var(--gray-bg); border: 1px solid var(--border);
+      border-radius: var(--radius); padding: 20px 24px; margin-top: 16px;
+    }
+    .intro-card ul { list-style: none; }
+    .intro-card li { display: flex; gap: 10px; padding: 6px 0; font-size: 14px; color: var(--ink); }
+    .intro-card li::before { content: "✓"; color: var(--teal); font-weight: 700; }
+
+    /* ---------- Leave list ---------- */
+    .list-toolbar {
+      display: flex; justify-content: space-between; align-items: center;
+      margin-bottom: 14px; flex-wrap: wrap; gap: 10px;
+    }
+    .count-pill {
+      background: rgba(32, 201, 151, 0.12); color: var(--teal-dark);
+      padding: 5px 14px; border-radius: 100px; font-size: 13px; font-weight: 600;
+    }
+    .leave-list { border: 1px solid var(--border); border-radius: var(--radius); overflow: hidden; }
+    .leave-item {
+      display: flex; align-items: center; gap: 14px;
+      padding: 16px 18px; border-bottom: 1px solid var(--border); transition: background 0.15s;
+    }
+    .leave-item:last-child { border-bottom: none; }
+    .leave-item:hover { background: var(--gray-bg); }
+
+    .checkbox {
+      appearance: none; -webkit-appearance: none;
+      width: 22px; height: 22px; flex-shrink: 0;
+      border: 2px solid #cbd3da; border-radius: 6px;
+      cursor: pointer; position: relative; transition: all 0.2s;
+    }
+    .checkbox:checked { background: var(--teal); border-color: var(--teal); }
+    .checkbox:checked::after {
+      content: ""; position: absolute; left: 6px; top: 2px;
+      width: 6px; height: 11px; border: solid #fff;
+      border-width: 0 2px 2px 0; transform: rotate(45deg);
+    }
+    .leave-meta { flex: 1; min-width: 0; }
+    .leave-name { font-size: 15px; font-weight: 600; color: var(--ink); }
+    .leave-hint { font-size: 13px; color: var(--gray-text); }
+    .leave-item.unchecked .leave-name { opacity: 0.45; text-decoration: line-through; }
+    .leave-item.unchecked .leave-hint { opacity: 0.45; }
+
+    /* Attachment toggle */
+    .toggle-wrap { display: flex; align-items: center; gap: 10px; flex-shrink: 0; }
+    .toggle-label { font-size: 12px; color: var(--gray-text); font-weight: 600; white-space: nowrap; }
+    .toggle {
+      appearance: none; -webkit-appearance: none;
+      width: 44px; height: 24px; border-radius: 100px;
+      background: #cbd3da; position: relative; cursor: pointer;
+      transition: background 0.25s; flex-shrink: 0;
+    }
+    .toggle::after {
+      content: ""; position: absolute; top: 2px; left: 2px;
+      width: 20px; height: 20px; background: #fff; border-radius: 50%;
+      transition: transform 0.25s; box-shadow: 0 1px 3px rgba(0,0,0,0.2);
+    }
+    .toggle:checked { background: var(--teal); }
+    .toggle:checked::after { transform: translateX(20px); }
+    .toggle:disabled { opacity: 0.4; cursor: not-allowed; }
+
+    /* ---------- Custom form ---------- */
+    .field { margin-bottom: 20px; }
+    .field label { display: block; font-size: 14px; font-weight: 600; margin-bottom: 8px; }
+    .req { color: var(--error); margin-left: 2px; }
+    .field input {
+      width: 100%; padding: 12px 14px; font-family: inherit; font-size: 15px;
+      color: var(--ink); background: var(--white);
+      border: 1.5px solid var(--border); border-radius: 10px;
+      transition: border-color 0.2s, box-shadow 0.2s;
+    }
+    .field input:focus { outline: none; border-color: var(--teal); box-shadow: 0 0 0 4px rgba(32, 201, 151, 0.12); }
+    .field.invalid input { border-color: var(--error); }
+    .error-msg { display: none; color: var(--error); font-size: 13px; margin-top: 6px; }
+    .field.invalid .error-msg { display: block; }
+    .inline-toggle { display: flex; align-items: center; gap: 12px; margin-bottom: 4px; }
+    .inline-toggle .toggle-label { font-size: 14px; color: var(--ink); }
+    .add-custom-form {
+      background: var(--gray-bg); border: 1px solid var(--border);
+      border-radius: var(--radius); padding: 22px 24px; margin-bottom: 18px;
+    }
+    .added-list { list-style: none; }
+    .added-list li {
+      display: flex; justify-content: space-between; align-items: center;
+      padding: 12px 16px; border: 1px solid var(--border);
+      border-radius: 10px; margin-bottom: 10px; font-size: 14px;
+    }
+    .added-list .remove { background: none; border: none; color: var(--error); cursor: pointer; font-size: 18px; line-height: 1; }
+    .empty-hint { color: var(--gray-text); font-size: 14px; text-align: center; padding: 14px 0; }
+
+    /* ---------- Preview ---------- */
+    .done-illustration { font-size: 56px; text-align: center; margin: 12px 0; }
+    .summary-list { border: 1px solid var(--border); border-radius: var(--radius); overflow: hidden; }
+    .summary-list .summary-row {
+      display: flex; justify-content: space-between; align-items: center;
+      padding: 14px 18px; border-bottom: 1px solid var(--border); font-size: 14px;
+    }
+    .summary-list .summary-row:last-child { border-bottom: none; }
+    .summary-list .name { font-weight: 600; }
+    .badge {
+      font-size: 12px; font-weight: 700; padding: 3px 10px; border-radius: 100px;
+    }
+    .badge-yes { background: rgba(32,201,151,0.12); color: var(--teal-dark); }
+    .badge-no { background: #eef1f4; color: var(--gray-text); }
+    .tag-custom {
+      background: rgba(32,201,151,0.12); color: var(--teal-dark);
+      font-size: 11px; font-weight: 700; padding: 2px 8px; border-radius: 100px; margin-left: 8px;
+    }
+    .success-banner {
+      display: none; background: rgba(32, 201, 151, 0.12); color: var(--teal-dark);
+      border: 1px solid rgba(32, 201, 151, 0.3); border-radius: 10px;
+      padding: 14px 18px; font-weight: 600; font-size: 14px; margin-top: 16px; text-align: center;
+    }
+
+    /* ---------- Footer ---------- */
+    .wizard-footer {
+      display: flex; justify-content: space-between; gap: 14px;
+      padding: 20px 40px 32px; border-top: 1px solid var(--border);
+    }
+    .btn {
+      padding: 12px 28px; font-family: inherit; font-size: 15px; font-weight: 600;
+      border-radius: 10px; border: 1.5px solid transparent; cursor: pointer;
+      transition: background 0.2s, border-color 0.2s, opacity 0.2s;
+    }
+    .btn-primary { background: var(--teal); color: #fff; }
+    .btn-primary:hover { background: var(--teal-dark); }
+    .btn-primary:disabled { background: #cbd3da; cursor: not-allowed; }
+    .btn-secondary { background: var(--white); color: var(--gray-text); border-color: var(--border); }
+    .btn-secondary:hover { background: var(--gray-bg); }
+    .btn-secondary:disabled { opacity: 0.4; cursor: not-allowed; }
+    .btn-add { background: var(--teal); color: #fff; margin-bottom: 18px; }
+    .btn-add:hover { background: var(--teal-dark); }
+    .btn-link {
+      background: transparent;
+      color: var(--teal);
+      border: none;
+      font-size: 14px;
+      padding: 10px 0;
+      cursor: pointer;
+      text-decoration: none;
+      transition: color 0.2s;
+    }
+    .btn-link:hover { color: var(--teal-dark); text-decoration: underline; }
+
+    @media (max-width: 768px) {
+      body { padding: 24px 12px; }
+      .wizard-header, .wizard-body, .wizard-footer, .progress-wrap { padding-left: 24px; padding-right: 24px; }
+    }
+    @media (max-width: 560px) {
+      .leave-item { flex-wrap: wrap; }
+      .toggle-wrap { width: 100%; justify-content: flex-start; padding-left: 36px; }
+    }
+    @media (max-width: 480px) {
+      .wizard-footer { flex-direction: column-reverse; }
+      .btn { width: 100%; }
+      .wizard-title { font-size: 20px; }
+    }
+  </style>
+</head>
+<body>
+  <main class="wizard" role="form" aria-label="Leave Types Setup Wizard">
+    <header class="wizard-header">
+      <div class="brand"><span class="brand-dot">K</span> KANDO HRMS</div>
+      <h1 class="wizard-title"><span class="emoji">🌴</span> Leave Types Setup</h1>
+    </header>
+
+    <div class="progress-wrap">
+      <div class="progress-label" id="progressLabel">Step 1 of 4</div>
+      <div class="progress-track"><div class="progress-fill" id="progressFill"></div></div>
+    </div>
+
+    <section class="wizard-body" id="wizardBody"></section>
+
+    <footer class="wizard-footer">
+      <button class="btn btn-link" onclick="backToHub()" title="Return to wizard selection">↩ Back to Hub</button>
+      <div style="display: flex; gap: 8px;">
+        <button class="btn btn-secondary" id="backBtn" disabled>← Back</button>
+        <button class="btn btn-primary" id="nextBtn">Next →</button>
+      </div>
+    </footer>
+  </main>
+
+  <script>
+    /* =========================================================
+       Leave Types Wizard
+       ========================================================= */
+    const TOTAL_STEPS = 4;
+    let currentStep = 1;
+
+    // Pre-populated leave types. `on` = included; `attach` = requires attachment.
+    const leaveTypes = [
+      { name: "Vacation Leave", on: true, attach: false },
+      { name: "Sick Leave", on: true, attach: true },
+      { name: "Bereavement Leave", on: true, attach: false },
+      { name: "Emergency Leave", on: true, attach: false },
+      { name: "Maternity Leave", on: true, attach: true },
+      { name: "Paternity Leave", on: true, attach: true },
+      { name: "Solo Parent Leave", on: true, attach: false }
+    ];
+
+    const customLeaves = [];
+    let customAttach = false; // toggle state for the custom form
+
+    const body = document.getElementById('wizardBody');
+    const backBtn = document.getElementById('backBtn');
+    const nextBtn = document.getElementById('nextBtn');
+
+    // Navigate back to the hub
+    function backToHub() {
+      window.location.href = 'index.html';
+    }
+    const progressFill = document.getElementById('progressFill');
+    const progressLabel = document.getElementById('progressLabel');
+
+    function escapeHtml(s) {
+      return String(s).replace(/[&<>"']/g, c => ({
+        '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
+      }[c]));
+    }
+    function selectedCount() { return leaveTypes.filter(l => l.on).length + customLeaves.length; }
+
+    /* ----- Step 1: Welcome ----- */
+    function renderStep1() {
+      return `
+        <div class="step">
+          <div class="intro-illustration">🏖️</div>
+          <h2 class="step-heading">Configure Your Leave Types</h2>
+          <p class="step-sub">Kando is pre-loaded with the common leave types used by Philippine employers, including statutory leaves. Customize them to fit your policies.</p>
+          <div class="intro-card">
+            <ul>
+              <li>Review ${leaveTypes.length} pre-populated leave types</li>
+              <li>Toggle whether each one requires a supporting document</li>
+              <li>Add your own company-specific leave types</li>
+            </ul>
+          </div>
+        </div>`;
+    }
+
+    /* ----- Step 2: Review leave types ----- */
+    function renderStep2() {
+      const rows = leaveTypes.map((l, i) => `
+        <div class="leave-item ${l.on ? '' : 'unchecked'}" data-idx="${i}">
+          <input type="checkbox" class="checkbox" ${l.on ? 'checked' : ''} data-role="include" data-idx="${i}" />
+          <div class="leave-meta">
+            <div class="leave-name">${escapeHtml(l.name)}</div>
+            <div class="leave-hint">${l.attach ? 'Attachment required' : 'No attachment needed'}</div>
+          </div>
+          <div class="toggle-wrap">
+            <span class="toggle-label">Requires attachment?</span>
+            <input type="checkbox" class="toggle" ${l.attach ? 'checked' : ''} ${l.on ? '' : 'disabled'} data-role="attach" data-idx="${i}" />
+          </div>
+        </div>`).join('');
+      return `
+        <div class="step">
+          <h2 class="step-heading">Review Leave Types</h2>
+          <p class="step-sub">Uncheck any you don't need, and set whether an attachment is required.</p>
+          <div class="list-toolbar">
+            <span class="count-pill" id="countPill">${selectedCount()} enabled</span>
+          </div>
+          <div class="leave-list">${rows}</div>
+        </div>`;
+    }
+
+    function wireStep2() {
+      body.querySelectorAll('[data-role="include"]').forEach(cb => {
+        cb.addEventListener('change', () => {
+          const idx = +cb.dataset.idx;
+          leaveTypes[idx].on = cb.checked;
+          render(); // re-render to enable/disable the paired toggle
+        });
+      });
+      body.querySelectorAll('[data-role="attach"]').forEach(tg => {
+        tg.addEventListener('change', () => {
+          const idx = +tg.dataset.idx;
+          leaveTypes[idx].attach = tg.checked;
+          const hint = body.querySelectorAll('.leave-hint')[idx];
+          if (hint) hint.textContent = tg.checked ? 'Attachment required' : 'No attachment needed';
+        });
+      });
+    }
+
+    /* ----- Step 3: Add custom leave types ----- */
+    function renderStep3() {
+      const added = customLeaves.length
+        ? `<ul class="added-list">${customLeaves.map((l, i) => `
+            <li>
+              <span><strong>${escapeHtml(l.name)}</strong> <span class="badge ${l.attach ? 'badge-yes' : 'badge-no'}">${l.attach ? 'Attachment required' : 'No attachment'}</span></span>
+              <button class="remove" data-idx="${i}" title="Remove">×</button>
+            </li>`).join('')}</ul>`
+        : `<p class="empty-hint">No custom leave types added yet. This step is optional.</p>`;
+      return `
+        <div class="step">
+          <h2 class="step-heading">Add Custom Leave Types</h2>
+          <p class="step-sub">Add any leave types unique to your organization. This step is optional.</p>
+          <div class="add-custom-form">
+            <div class="field" data-field="cname">
+              <label>Leave Type Name <span class="req">*</span></label>
+              <input type="text" id="c_name" placeholder="e.g., Birthday Leave" />
+              <div class="error-msg">Please enter a leave type name.</div>
+            </div>
+            <div class="inline-toggle">
+              <input type="checkbox" class="toggle" id="c_attach" ${customAttach ? 'checked' : ''} />
+              <span class="toggle-label">Requires attachment?</span>
+            </div>
+          </div>
+          <button class="btn btn-add" id="addCustomBtn">+ Add Leave Type</button>
+          ${added}
+        </div>`;
+    }
+
+    function wireStep3() {
+      const attachEl = document.getElementById('c_attach');
+      attachEl.addEventListener('change', () => { customAttach = attachEl.checked; });
+
+      document.getElementById('addCustomBtn').addEventListener('click', () => {
+        const name = document.getElementById('c_name').value.trim();
+        const wrap = document.querySelector('.field[data-field="cname"]');
+        if (name.length === 0) { wrap.classList.add('invalid'); return; }
+        customLeaves.push({ name, attach: customAttach });
+        customAttach = false;
+        render();
+      });
+      body.querySelectorAll('.remove').forEach(btn => {
+        btn.addEventListener('click', () => { customLeaves.splice(+btn.dataset.idx, 1); render(); });
+      });
+    }
+
+    /* ----- Step 4: Preview ----- */
+    function renderStep4() {
+      const items = [
+        ...leaveTypes.filter(l => l.on).map(l => ({ name: l.name, attach: l.attach, custom: false })),
+        ...customLeaves.map(l => ({ name: l.name, attach: l.attach, custom: true }))
+      ];
+      const rows = items.map(it => `
+        <div class="summary-row">
+          <span class="name">${escapeHtml(it.name)}${it.custom ? '<span class="tag-custom">CUSTOM</span>' : ''}</span>
+          <span class="badge ${it.attach ? 'badge-yes' : 'badge-no'}">${it.attach ? 'Attachment required' : 'No attachment'}</span>
+        </div>`).join('');
+      return `
+        <div class="step">
+          <div class="done-illustration">📋</div>
+          <h2 class="step-heading">Preview &amp; Confirm</h2>
+          <p class="step-sub">You're setting up <strong>${items.length} leave type${items.length === 1 ? '' : 's'}</strong>.</p>
+          <div class="summary-list">${rows || '<div class="empty-hint">No leave types selected.</div>'}</div>
+          <div class="success-banner" id="successBanner">🎉 Leave types created successfully!</div>
+        </div>`;
+    }
+
+    /* ----- Render controller ----- */
+    function render() {
+      if (currentStep === 1) body.innerHTML = renderStep1();
+      else if (currentStep === 2) { body.innerHTML = renderStep2(); wireStep2(); }
+      else if (currentStep === 3) { body.innerHTML = renderStep3(); wireStep3(); }
+      else body.innerHTML = renderStep4();
+
+      progressFill.style.width = (currentStep / TOTAL_STEPS * 100) + '%';
+      progressLabel.textContent = `Step ${currentStep} of ${TOTAL_STEPS}`;
+
+      backBtn.disabled = currentStep === 1;
+      nextBtn.textContent = currentStep === TOTAL_STEPS ? 'Confirm & Create' : 'Next →';
+      nextBtn.disabled = (currentStep === 2 && selectedCount() === 0);
+    }
+
+    /* ----- Navigation ----- */
+    nextBtn.addEventListener('click', () => {
+      if (currentStep === 2 && selectedCount() === 0) return;
+      if (currentStep === TOTAL_STEPS) {
+        const banner = document.getElementById('successBanner');
+        if (banner) banner.style.display = 'block';
+        nextBtn.disabled = true;
+        nextBtn.textContent = 'Created ✓';
+        return;
+      }
+      currentStep++;
+      render();
+    });
+    backBtn.addEventListener('click', () => { if (currentStep > 1) { currentStep--; render(); } });
+
+    render();
+  </script>
+</body>
+</html>

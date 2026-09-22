@@ -1,0 +1,431 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Kando Onboarding Wizard Hub</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Fira Sans', 'Droid Sans', 'Helvetica Neue', sans-serif;
+            background: linear-gradient(135deg, #f5f7fa 0%, #ffffff 100%);
+            min-height: 100vh;
+            padding: 40px 20px;
+        }
+
+        .container {
+            max-width: 1000px;
+            margin: 0 auto;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 50px;
+        }
+
+        .brand-badge {
+            display: inline-block;
+            width: 50px;
+            height: 50px;
+            background: #2c3e50;
+            color: white;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 24px;
+            font-weight: bold;
+            margin-bottom: 20px;
+        }
+
+        h1 {
+            font-size: 32px;
+            color: #2c3e50;
+            margin-bottom: 10px;
+            font-weight: 700;
+        }
+
+        .tagline {
+            font-size: 16px;
+            color: #666;
+            margin-bottom: 30px;
+        }
+
+        .progress-info {
+            background: #e7f5f2;
+            border: 1px solid #20c997;
+            border-radius: 6px;
+            padding: 15px;
+            text-align: center;
+            margin-bottom: 40px;
+        }
+
+        .progress-info p {
+            font-size: 14px;
+            color: #2c3e50;
+        }
+
+        .progress-info strong {
+            color: #20c997;
+        }
+
+        .wizards-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 25px;
+            margin-bottom: 40px;
+        }
+
+        .wizard-card {
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+            overflow: hidden;
+            transition: all 0.3s ease;
+            cursor: pointer;
+        }
+
+        .wizard-card:hover {
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
+            transform: translateY(-4px);
+        }
+
+        .wizard-card-header {
+            background: linear-gradient(135deg, #2c3e50 0%, #34495e 100%);
+            color: white;
+            padding: 25px;
+            text-align: center;
+        }
+
+        .wizard-icon {
+            font-size: 40px;
+            margin-bottom: 10px;
+        }
+
+        .wizard-card-header h2 {
+            font-size: 20px;
+            font-weight: 600;
+            margin-bottom: 5px;
+        }
+
+        .wizard-card-header p {
+            font-size: 13px;
+            opacity: 0.9;
+        }
+
+        .wizard-card-body {
+            padding: 25px;
+        }
+
+        .wizard-card-body p {
+            font-size: 14px;
+            color: #666;
+            line-height: 1.6;
+            margin-bottom: 15px;
+        }
+
+        .wizard-steps {
+            background: #f8f9fa;
+            border-radius: 4px;
+            padding: 12px;
+            margin-bottom: 20px;
+            font-size: 12px;
+            color: #2c3e50;
+        }
+
+        .wizard-steps strong {
+            display: block;
+            margin-bottom: 8px;
+            font-size: 13px;
+        }
+
+        .step-list {
+            list-style: none;
+            padding-left: 0;
+        }
+
+        .step-list li {
+            padding: 4px 0;
+            color: #666;
+        }
+
+        .step-list li:before {
+            content: "→ ";
+            color: #20c997;
+            font-weight: bold;
+            margin-right: 6px;
+        }
+
+        .open-btn {
+            display: inline-block;
+            width: 100%;
+            padding: 12px;
+            background: #20c997;
+            color: white;
+            text-align: center;
+            text-decoration: none;
+            border-radius: 4px;
+            font-weight: 500;
+            font-size: 14px;
+            transition: background 0.2s;
+            border: none;
+            cursor: pointer;
+        }
+
+        .open-btn:hover {
+            background: #1ab385;
+        }
+
+        .status-badge {
+            display: inline-block;
+            background: #e7f5f2;
+            color: #20c997;
+            padding: 4px 12px;
+            border-radius: 12px;
+            font-size: 12px;
+            font-weight: 500;
+            margin-top: 10px;
+        }
+
+        .footer {
+            text-align: center;
+            padding-top: 40px;
+            border-top: 1px solid rgba(60, 60, 60, 0.12);
+            color: #999;
+            font-size: 13px;
+        }
+
+        .footer p {
+            margin-bottom: 10px;
+        }
+
+        .nav-breadcrumb {
+            margin-bottom: 30px;
+            font-size: 13px;
+        }
+
+        .nav-breadcrumb a {
+            color: #20c997;
+            text-decoration: none;
+        }
+
+        .nav-breadcrumb a:hover {
+            text-decoration: underline;
+        }
+
+        @media (max-width: 768px) {
+            h1 {
+                font-size: 24px;
+            }
+
+            .wizards-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .wizard-card-header {
+                padding: 20px;
+            }
+
+            .wizard-card-body {
+                padding: 20px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <div class="brand-badge">K</div>
+            <h1>🚀 Kando Onboarding Wizard Hub</h1>
+            <p class="tagline">Complete your organization setup in minutes</p>
+        </div>
+
+        <div class="progress-info">
+            <p>Welcome! Select a setup wizard below to configure your organization. Complete all seven to finish onboarding. <strong>Total: ~35-40 minutes</strong></p>
+        </div>
+
+        <div class="wizards-grid">
+            <!-- Payroll Periods Wizard -->
+            <div class="wizard-card">
+                <div class="wizard-card-header">
+                    <div class="wizard-icon">📊</div>
+                    <h2>Payroll Periods</h2>
+                    <p>Step 1 of 3</p>
+                </div>
+                <div class="wizard-card-body">
+                    <p>Define when your payroll runs and when employees get paid. Set up monthly, semi-monthly, bi-weekly, or weekly pay cycles.</p>
+                    <div class="wizard-steps">
+                        <strong>Setup Steps:</strong>
+                        <ul class="step-list">
+                            <li>Period name & type</li>
+                            <li>Start and end dates</li>
+                            <li>Payment date</li>
+                            <li>Review & confirm</li>
+                        </ul>
+                    </div>
+                    <div class="status-badge">~5 min</div>
+                    <button class="open-btn" onclick="openWizard('payroll-periods-wizard.html')">Start Wizard →</button>
+                </div>
+            </div>
+
+            <!-- Holiday Calendar Wizard -->
+            <div class="wizard-card">
+                <div class="wizard-card-header">
+                    <div class="wizard-icon">🎉</div>
+                    <h2>Holiday Calendar</h2>
+                    <p>Step 2 of 3</p>
+                </div>
+                <div class="wizard-card-body">
+                    <p>Set up your organization's holidays and special non-working days. We've pre-populated Philippine holidays for your convenience.</p>
+                    <div class="wizard-steps">
+                        <strong>Setup Steps:</strong>
+                        <ul class="step-list">
+                            <li>Review pre-populated holidays</li>
+                            <li>Add custom holidays</li>
+                            <li>Confirm selections</li>
+                        </ul>
+                    </div>
+                    <div class="status-badge">~5 min</div>
+                    <button class="open-btn" onclick="openWizard('holiday-calendar-wizard.html')">Start Wizard →</button>
+                </div>
+            </div>
+
+            <!-- Leave Types Wizard -->
+            <div class="wizard-card">
+                <div class="wizard-card-header">
+                    <div class="wizard-icon">🌴</div>
+                    <h2>Leave Types</h2>
+                    <p>Step 3 of 3</p>
+                </div>
+                <div class="wizard-card-body">
+                    <p>Configure the types of leave your employees can request. We've included common leave types like vacation, sick leave, and bereavement.</p>
+                    <div class="wizard-steps">
+                        <strong>Setup Steps:</strong>
+                        <ul class="step-list">
+                            <li>Review leave types</li>
+                            <li>Set attachment requirements</li>
+                            <li>Add custom types</li>
+                            <li>Confirm selections</li>
+                        </ul>
+                    </div>
+                    <div class="status-badge">~5 min</div>
+                    <button class="open-btn" onclick="openWizard('leave-types-wizard.html')">Start Wizard →</button>
+                </div>
+            </div>
+
+            <!-- Shift Configuration Wizard -->
+            <div class="wizard-card">
+                <div class="wizard-card-header">
+                    <div class="wizard-icon">🕐</div>
+                    <h2>Shift Configuration</h2>
+                    <p>Step 4 of 7</p>
+                </div>
+                <div class="wizard-card-body">
+                    <p>Define the work shifts your teams follow — standard office hours, rotating manufacturing shifts, retail, healthcare, or hybrid/remote.</p>
+                    <div class="wizard-steps">
+                        <strong>Setup Steps:</strong>
+                        <ul class="step-list">
+                            <li>Select a template or start custom</li>
+                            <li>Define shift name, time in/out, break</li>
+                            <li>Review & confirm</li>
+                        </ul>
+                    </div>
+                    <div class="status-badge">~5 min</div>
+                    <button class="open-btn" onclick="openWizard('shift-configuration-wizard.html')">Start Wizard →</button>
+                </div>
+            </div>
+
+            <!-- Leave Policies Wizard -->
+            <div class="wizard-card">
+                <div class="wizard-card-header">
+                    <div class="wizard-icon">📐</div>
+                    <h2>Leave Policies</h2>
+                    <p>Step 5 of 7</p>
+                </div>
+                <div class="wizard-card-body">
+                    <p>Define how employees accrue or earn leave per leave type — monthly accrual, annual fixed, or a one-time grant at hire.</p>
+                    <div class="wizard-steps">
+                        <strong>Setup Steps:</strong>
+                        <ul class="step-list">
+                            <li>Select leave type</li>
+                            <li>Choose accrual method & rate</li>
+                            <li>Preview & assign to employees</li>
+                        </ul>
+                    </div>
+                    <div class="status-badge">~5 min</div>
+                    <button class="open-btn" onclick="openWizard('leave-policies-wizard.html')">Start Wizard →</button>
+                </div>
+            </div>
+
+            <!-- Leave Credits Initialization Wizard -->
+            <div class="wizard-card">
+                <div class="wizard-card-header">
+                    <div class="wizard-icon">🎁</div>
+                    <h2>Leave Credits Initialization</h2>
+                    <p>Step 6 of 7</p>
+                </div>
+                <div class="wizard-card-body">
+                    <p>Grant employees their starting leave balance based on policy defaults, with manual overrides where needed.</p>
+                    <div class="wizard-steps">
+                        <strong>Setup Steps:</strong>
+                        <ul class="step-list">
+                            <li>Select leave type & employees</li>
+                            <li>Calculate & preview balances</li>
+                            <li>Initialize credits</li>
+                        </ul>
+                    </div>
+                    <div class="status-badge">~5 min</div>
+                    <button class="open-btn" onclick="openWizard('leave-credits-wizard.html')">Start Wizard →</button>
+                </div>
+            </div>
+
+            <!-- Departments Wizard -->
+            <div class="wizard-card">
+                <div class="wizard-card-header">
+                    <div class="wizard-icon">🏢</div>
+                    <h2>Departments</h2>
+                    <p>Step 7 of 7</p>
+                </div>
+                <div class="wizard-card-body">
+                    <p>Create your organizational departments and assign managers for reporting, approvals, and structure.</p>
+                    <div class="wizard-steps">
+                        <strong>Setup Steps:</strong>
+                        <ul class="step-list">
+                            <li>Create departments</li>
+                            <li>Assign managers</li>
+                            <li>Review & confirm</li>
+                        </ul>
+                    </div>
+                    <div class="status-badge">~5 min</div>
+                    <button class="open-btn" onclick="openWizard('departments-wizard.html')">Start Wizard →</button>
+                </div>
+            </div>
+        </div>
+
+        <div class="footer">
+            <p><strong>💡 Tip:</strong> Complete all three wizards to fully set up your organization. You can always go back and edit your settings later.</p>
+            <p>© 2026 Kando HRMS. All rights reserved.</p>
+        </div>
+    </div>
+
+    <script>
+        function openWizard(wizardFile) {
+            // Open the wizard in the same window/tab
+            window.location.href = wizardFile;
+        }
+
+        // Optional: Show completion message if coming back from a wizard
+        const urlParams = new URLSearchParams(window.location.search);
+        if (urlParams.get('completed')) {
+            const completedWizard = urlParams.get('wizard');
+            console.log('Completed:', completedWizard);
+            // You can add a toast notification here
+        }
+    </script>
+</body>
+</html>

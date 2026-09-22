@@ -1,0 +1,535 @@
+<!--
+  Kando Onboarding Wizard - Holiday Calendar
+  Self-contained: inline CSS + vanilla JS, no external dependencies.
+-->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Kando · Holiday Calendar Setup</title>
+  <style>
+    :root {
+      --teal: #20c997;
+      --teal-dark: #17a882;
+      --ink: #2c3e50;
+      --white: #ffffff;
+      --border: rgba(60, 60, 60, 0.12);
+      --gray-bg: #f7f9fb;
+      --gray-text: #6b7785;
+      --error: #e03131;
+      --radius: 12px;
+      --shadow: 0 10px 30px rgba(44, 62, 80, 0.08);
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+      background: var(--gray-bg);
+      color: var(--ink);
+      line-height: 1.5;
+      min-height: 100vh;
+      display: flex;
+      align-items: flex-start;
+      justify-content: center;
+      padding: 48px 20px;
+    }
+    .wizard {
+      width: 100%;
+      max-width: 760px;
+      background: var(--white);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      overflow: hidden;
+    }
+    .wizard-header { padding: 32px 40px 24px; border-bottom: 1px solid var(--border); }
+    .brand {
+      display: flex; align-items: center; gap: 10px;
+      font-weight: 700; font-size: 15px; letter-spacing: 0.02em;
+      color: var(--teal); margin-bottom: 18px;
+    }
+    .brand-dot {
+      width: 26px; height: 26px; background: var(--teal); border-radius: 8px;
+      display: inline-flex; align-items: center; justify-content: center;
+      color: #fff; font-size: 15px;
+    }
+    .wizard-title {
+      display: flex; align-items: center; gap: 12px;
+      font-size: 24px; font-weight: 700; color: var(--ink);
+    }
+    .wizard-title .emoji { font-size: 28px; }
+
+    .progress-wrap { padding: 24px 40px 0; }
+    .progress-label { font-size: 13px; font-weight: 600; color: var(--gray-text); margin-bottom: 8px; }
+    .progress-track { height: 8px; background: #eef1f4; border-radius: 100px; overflow: hidden; }
+    .progress-fill {
+      height: 100%; background: var(--teal); width: 25%; border-radius: 100px;
+      transition: width 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    .wizard-body { padding: 32px 40px; min-height: 300px; }
+    .step { animation: fadeIn 0.3s ease; }
+    @keyframes fadeIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+    .step-heading { font-size: 20px; font-weight: 700; margin-bottom: 10px; }
+    .step-sub { color: var(--gray-text); font-size: 15px; margin-bottom: 24px; }
+
+    .intro-illustration { font-size: 56px; text-align: center; margin: 8px 0 20px; }
+    .intro-card {
+      background: var(--gray-bg); border: 1px solid var(--border);
+      border-radius: var(--radius); padding: 20px 24px; margin-top: 16px;
+    }
+    .intro-card ul { list-style: none; }
+    .intro-card li { display: flex; gap: 10px; padding: 6px 0; font-size: 14px; color: var(--ink); }
+    .intro-card li::before { content: "✓"; color: var(--teal); font-weight: 700; }
+
+    /* ---------- Holiday list ---------- */
+    .list-toolbar {
+      display: flex; justify-content: space-between; align-items: center;
+      margin-bottom: 14px; flex-wrap: wrap; gap: 10px;
+    }
+    .count-pill {
+      background: rgba(32, 201, 151, 0.12); color: var(--teal-dark);
+      padding: 5px 14px; border-radius: 100px; font-size: 13px; font-weight: 600;
+    }
+    .link-btn {
+      background: none; border: none; color: var(--teal-dark);
+      font-family: inherit; font-size: 13px; font-weight: 600; cursor: pointer;
+    }
+    .link-btn:hover { text-decoration: underline; }
+
+    .holiday-list {
+      border: 1px solid var(--border); border-radius: var(--radius);
+      overflow: hidden; max-height: 340px; overflow-y: auto;
+    }
+    .holiday-item {
+      display: flex; align-items: center; gap: 14px;
+      padding: 14px 18px; border-bottom: 1px solid var(--border);
+      transition: background 0.15s;
+    }
+    .holiday-item:last-child { border-bottom: none; }
+    .holiday-item:hover { background: var(--gray-bg); }
+
+    /* Custom checkbox */
+    .checkbox {
+      appearance: none; -webkit-appearance: none;
+      width: 22px; height: 22px; flex-shrink: 0;
+      border: 2px solid #cbd3da; border-radius: 6px;
+      cursor: pointer; position: relative; transition: all 0.2s;
+    }
+    .checkbox:checked { background: var(--teal); border-color: var(--teal); }
+    .checkbox:checked::after {
+      content: ""; position: absolute; left: 6px; top: 2px;
+      width: 6px; height: 11px; border: solid #fff;
+      border-width: 0 2px 2px 0; transform: rotate(45deg);
+    }
+    .holiday-meta { flex: 1; min-width: 0; }
+    .holiday-name { font-size: 15px; font-weight: 600; color: var(--ink); }
+    .holiday-date { font-size: 13px; color: var(--gray-text); }
+    .holiday-item.unchecked .holiday-name,
+    .holiday-item.unchecked .holiday-date { opacity: 0.45; text-decoration: line-through; }
+
+    /* ---------- Custom holiday form ---------- */
+    .field { margin-bottom: 20px; }
+    .field label { display: block; font-size: 14px; font-weight: 600; margin-bottom: 8px; }
+    .req { color: var(--error); margin-left: 2px; }
+    .field input, .field select {
+      width: 100%; padding: 12px 14px; font-family: inherit; font-size: 15px;
+      color: var(--ink); background: var(--white);
+      border: 1.5px solid var(--border); border-radius: 10px;
+      transition: border-color 0.2s, box-shadow 0.2s;
+    }
+    .field input:focus, .field select:focus {
+      outline: none; border-color: var(--teal);
+      box-shadow: 0 0 0 4px rgba(32, 201, 151, 0.12);
+    }
+    .field.invalid input, .field.invalid select { border-color: var(--error); }
+    .error-msg { display: none; color: var(--error); font-size: 13px; margin-top: 6px; }
+    .field.invalid .error-msg { display: block; }
+    .field-row { display: flex; gap: 18px; }
+    .field-row .field { flex: 1; }
+    .add-custom-form {
+      background: var(--gray-bg); border: 1px solid var(--border);
+      border-radius: var(--radius); padding: 22px 24px 6px; margin-bottom: 18px;
+    }
+    .added-list { list-style: none; }
+    .added-list li {
+      display: flex; justify-content: space-between; align-items: center;
+      padding: 12px 16px; border: 1px solid var(--border);
+      border-radius: 10px; margin-bottom: 10px; font-size: 14px;
+    }
+    .added-list .remove {
+      background: none; border: none; color: var(--error);
+      cursor: pointer; font-size: 18px; line-height: 1;
+    }
+    .empty-hint { color: var(--gray-text); font-size: 14px; text-align: center; padding: 14px 0; }
+
+    /* ---------- Preview ---------- */
+    .done-illustration { font-size: 56px; text-align: center; margin: 12px 0; }
+    .summary-list {
+      border: 1px solid var(--border); border-radius: var(--radius);
+      overflow: hidden; max-height: 320px; overflow-y: auto;
+    }
+    .summary-list .summary-row {
+      display: flex; justify-content: space-between;
+      padding: 12px 18px; border-bottom: 1px solid var(--border); font-size: 14px;
+    }
+    .summary-list .summary-row:last-child { border-bottom: none; }
+    .summary-list .name { font-weight: 600; }
+    .summary-list .date { color: var(--gray-text); }
+    .tag-custom {
+      background: rgba(32,201,151,0.12); color: var(--teal-dark);
+      font-size: 11px; font-weight: 700; padding: 2px 8px; border-radius: 100px; margin-left: 8px;
+    }
+    .success-banner {
+      display: none; background: rgba(32, 201, 151, 0.12); color: var(--teal-dark);
+      border: 1px solid rgba(32, 201, 151, 0.3); border-radius: 10px;
+      padding: 14px 18px; font-weight: 600; font-size: 14px; margin-top: 16px; text-align: center;
+    }
+
+    /* ---------- Tooltip Pattern ---------- */
+    .field-help {
+      position: relative;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 18px;
+      height: 18px;
+      margin-left: 6px;
+      cursor: help;
+      font-size: 14px;
+      color: #2f6fb0;
+    }
+
+    .field-help:hover::after {
+      content: attr(data-tooltip);
+      position: absolute;
+      bottom: 120%;
+      left: 50%;
+      transform: translateX(-50%);
+      background: var(--ink);
+      color: var(--white);
+      padding: 8px 12px;
+      border-radius: 6px;
+      font-size: 13px;
+      white-space: nowrap;
+      z-index: 1000;
+      box-shadow: 0 4px 12px rgba(44, 62, 80, 0.15);
+    }
+
+    .field-help:hover::before {
+      content: '';
+      position: absolute;
+      bottom: 110%;
+      left: 50%;
+      transform: translateX(-50%);
+      border: 5px solid transparent;
+      border-top-color: var(--ink);
+      z-index: 1000;
+    }
+
+    /* ---------- Footer ---------- */
+    .wizard-footer {
+      display: flex; justify-content: space-between; gap: 14px;
+      padding: 20px 40px 32px; border-top: 1px solid var(--border);
+    }
+    .btn {
+      padding: 12px 28px; font-family: inherit; font-size: 15px; font-weight: 600;
+      border-radius: 10px; border: 1.5px solid transparent; cursor: pointer;
+      transition: background 0.2s, border-color 0.2s, opacity 0.2s;
+    }
+    .btn-primary { background: var(--teal); color: #fff; }
+    .btn-primary:hover { background: var(--teal-dark); }
+    .btn-primary:disabled { background: #cbd3da; cursor: not-allowed; }
+    .btn-secondary { background: var(--white); color: var(--gray-text); border-color: var(--border); }
+    .btn-secondary:hover { background: var(--gray-bg); }
+    .btn-secondary:disabled { opacity: 0.4; cursor: not-allowed; }
+    .btn-add { background: var(--teal); color: #fff; margin-bottom: 18px; }
+    .btn-add:hover { background: var(--teal-dark); }
+    .btn-add:disabled { background: #cbd3da; cursor: not-allowed; }
+    .btn-link {
+      background: transparent;
+      color: var(--teal);
+      border: none;
+      font-size: 14px;
+      padding: 10px 0;
+      cursor: pointer;
+      text-decoration: none;
+      transition: color 0.2s;
+    }
+    .btn-link:hover { color: var(--teal-dark); text-decoration: underline; }
+
+    @media (max-width: 768px) {
+      body { padding: 24px 12px; }
+      .wizard-header, .wizard-body, .wizard-footer, .progress-wrap { padding-left: 24px; padding-right: 24px; }
+      .field-row { flex-direction: column; gap: 0; }
+    }
+    @media (max-width: 480px) {
+      .wizard-footer { flex-direction: column-reverse; }
+      .btn { width: 100%; }
+      .wizard-title { font-size: 20px; }
+    }
+  </style>
+</head>
+<body>
+  <main class="wizard" role="form" aria-label="Holiday Calendar Setup Wizard">
+    <header class="wizard-header">
+      <div class="brand"><span class="brand-dot">K</span> KANDO HRMS</div>
+      <h1 class="wizard-title"><span class="emoji">🎉</span> Holiday Calendar Setup</h1>
+    </header>
+
+    <div class="progress-wrap">
+      <div class="progress-label" id="progressLabel">Step 1 of 4</div>
+      <div class="progress-track"><div class="progress-fill" id="progressFill"></div></div>
+    </div>
+
+    <section class="wizard-body" id="wizardBody"></section>
+
+    <footer class="wizard-footer">
+      <button class="btn btn-link" onclick="backToHub()" title="Return to wizard selection">↩ Back to Hub</button>
+      <div style="display: flex; gap: 8px;">
+        <button class="btn btn-secondary" id="backBtn" disabled>← Back</button>
+        <button class="btn btn-primary" id="nextBtn">Next →</button>
+      </div>
+    </footer>
+  </main>
+
+  <script>
+    /* =========================================================
+       Holiday Calendar Wizard
+       ========================================================= */
+    const TOTAL_STEPS = 4;
+    let currentStep = 1;
+
+    // Pre-populated Philippine holidays. `on` toggles inclusion.
+    const holidays = [
+      { name: "New Year's Day", date: "January 1", on: true },
+      { name: "Araw ng Kagitingan", date: "February 25", on: true },
+      { name: "EDSA Revolution Anniversary", date: "February 25", on: true },
+      { name: "Maundy Thursday", date: "Varies", on: true },
+      { name: "Good Friday", date: "Varies", on: true },
+      { name: "Black Saturday", date: "Varies", on: true },
+      { name: "Easter Sunday", date: "Varies", on: true },
+      { name: "Araw ng Mga Puso", date: "April 9", on: true },
+      { name: "Labor Day", date: "May 1", on: true },
+      { name: "Independence Day", date: "June 12", on: true },
+      { name: "Ninoy Aquino Day", date: "August 21", on: true },
+      { name: "National Heroes Day", date: "4th Monday of August", on: true },
+      { name: "All Saints' Day", date: "November 1", on: true },
+      { name: "Bonifacio Day", date: "November 30", on: true },
+      { name: "Christmas Day", date: "December 25", on: true },
+      { name: "Rizal Day", date: "December 30", on: true }
+    ];
+
+    // Custom holidays added by the user.
+    const customHolidays = [];
+
+    const body = document.getElementById('wizardBody');
+    const backBtn = document.getElementById('backBtn');
+    const nextBtn = document.getElementById('nextBtn');
+
+    // Navigate back to the hub
+    function backToHub() {
+      window.location.href = 'index.html';
+    }
+    const progressFill = document.getElementById('progressFill');
+    const progressLabel = document.getElementById('progressLabel');
+
+    function escapeHtml(s) {
+      return String(s).replace(/[&<>"']/g, c => ({
+        '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
+      }[c]));
+    }
+    function formatDate(iso) {
+      if (!iso) return '—';
+      const d = new Date(iso + 'T00:00:00');
+      return d.toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
+    }
+    function selectedCount() { return holidays.filter(h => h.on).length + customHolidays.length; }
+
+    /* ----- Step 1: Welcome ----- */
+    function renderStep1() {
+      return `
+        <div class="step">
+          <div class="intro-illustration">🇵🇭</div>
+          <h2 class="step-heading">Set Up Your Holiday Calendar</h2>
+          <p class="step-sub">Kando comes pre-loaded with official Philippine regular and special non-working holidays, so you can get started in seconds.</p>
+          <div class="intro-card">
+            <ul>
+              <li>Review and confirm the ${holidays.length} pre-populated PH holidays</li>
+              <li>Remove any that don't apply to your organization</li>
+              <li>Add your own company-specific holidays</li>
+            </ul>
+          </div>
+        </div>`;
+    }
+
+    /* ----- Step 2: Review holidays ----- */
+    function renderStep2() {
+      const rows = holidays.map((h, i) => `
+        <div class="holiday-item ${h.on ? '' : 'unchecked'}" data-idx="${i}">
+          <input type="checkbox" class="checkbox" ${h.on ? 'checked' : ''} data-idx="${i}" />
+          <div class="holiday-meta">
+            <div class="holiday-name">${escapeHtml(h.name)}</div>
+            <div class="holiday-date">${escapeHtml(h.date)}</div>
+          </div>
+        </div>`).join('');
+      return `
+        <div class="step">
+          <h2 class="step-heading">Review Philippine Holidays</h2>
+          <p class="step-sub">Uncheck any holiday you'd like to remove from your calendar.</p>
+          <div class="list-toolbar">
+            <span class="count-pill" id="countPill">${selectedCount()} selected</span>
+            <div>
+              <button class="link-btn" id="selectAll">Select all</button>
+              &nbsp;·&nbsp;
+              <button class="link-btn" id="clearAll">Clear all</button>
+            </div>
+          </div>
+          <div class="holiday-list">${rows}</div>
+        </div>`;
+    }
+
+    function wireStep2() {
+      body.querySelectorAll('.checkbox').forEach(cb => {
+        cb.addEventListener('change', () => {
+          const idx = +cb.dataset.idx;
+          holidays[idx].on = cb.checked;
+          cb.closest('.holiday-item').classList.toggle('unchecked', !cb.checked);
+          document.getElementById('countPill').textContent = selectedCount() + ' selected';
+        });
+      });
+      document.getElementById('selectAll').addEventListener('click', () => {
+        holidays.forEach(h => h.on = true); render();
+      });
+      document.getElementById('clearAll').addEventListener('click', () => {
+        holidays.forEach(h => h.on = false); render();
+      });
+    }
+
+    /* ----- Step 3: Add custom holidays ----- */
+    function renderStep3() {
+      const added = customHolidays.length
+        ? `<ul class="added-list">${customHolidays.map((h, i) => `
+            <li>
+              <span><strong>${escapeHtml(h.name)}</strong> — ${formatDate(h.date)} <span class="tag-custom">${escapeHtml(h.type)}</span></span>
+              <button class="remove" data-idx="${i}" title="Remove">×</button>
+            </li>`).join('')}</ul>`
+        : `<p class="empty-hint">No custom holidays added yet. This step is optional.</p>`;
+      return `
+        <div class="step">
+          <h2 class="step-heading">Add Custom Holidays</h2>
+          <p class="step-sub">Add company-specific or local holidays. This step is optional.</p>
+          <div class="add-custom-form">
+            <div class="field" data-field="cname">
+              <label>Holiday Name <span class="field-help" data-tooltip="E.g., Company Foundation Day, Local Feast Day">ℹ️</span><span class="req">*</span></label>
+              <input type="text" id="c_name" placeholder="e.g., Company Foundation Day" />
+              <div class="error-msg">Please enter a holiday name.</div>
+            </div>
+            <div class="field-row">
+              <div class="field" data-field="cdate">
+                <label>Date <span class="field-help" data-tooltip="When this holiday occurs (YYYY-MM-DD format)">ℹ️</span><span class="req">*</span></label>
+                <input type="date" id="c_date" />
+                <div class="error-msg">Please choose a date.</div>
+              </div>
+              <div class="field" data-field="ctype">
+                <label>Type <span class="field-help" data-tooltip="Regular: Full non-working day. Special: Special non-working day. Company: Internal company holiday">ℹ️</span><span class="req">*</span></label>
+                <select id="c_type">
+                  <option value="">Select type…</option>
+                  <option value="Regular">Regular Holiday</option>
+                  <option value="Special">Special Non-Working</option>
+                  <option value="Company">Company Holiday</option>
+                </select>
+                <div class="error-msg">Please choose a type.</div>
+              </div>
+            </div>
+          </div>
+          <button class="btn btn-add" id="addCustomBtn">+ Add Holiday</button>
+          ${added}
+        </div>`;
+    }
+
+    function wireStep3() {
+      const addBtn = document.getElementById('addCustomBtn');
+      addBtn.addEventListener('click', () => {
+        const name = document.getElementById('c_name').value.trim();
+        const date = document.getElementById('c_date').value;
+        const type = document.getElementById('c_type').value;
+        let ok = true;
+        toggleInvalid('cname', name.length > 0) || (ok = false);
+        toggleInvalid('cdate', date !== '') || (ok = false);
+        toggleInvalid('ctype', type !== '') || (ok = false);
+        if (!ok) return;
+        customHolidays.push({ name, date, type });
+        render();
+      });
+      body.querySelectorAll('.remove').forEach(btn => {
+        btn.addEventListener('click', () => {
+          customHolidays.splice(+btn.dataset.idx, 1);
+          render();
+        });
+      });
+    }
+
+    // Returns validity; also toggles the invalid class for feedback.
+    function toggleInvalid(field, valid) {
+      const wrap = document.querySelector(`.field[data-field="${field}"]`);
+      if (wrap) wrap.classList.toggle('invalid', !valid);
+      return valid;
+    }
+
+    /* ----- Step 4: Preview ----- */
+    function renderStep4() {
+      const items = [
+        ...holidays.filter(h => h.on).map(h => ({ name: h.name, date: h.date, custom: false })),
+        ...customHolidays.map(h => ({ name: h.name, date: formatDate(h.date), custom: true }))
+      ];
+      const rows = items.map(it => `
+        <div class="summary-row">
+          <span class="name">${escapeHtml(it.name)}${it.custom ? '<span class="tag-custom">CUSTOM</span>' : ''}</span>
+          <span class="date">${escapeHtml(it.date)}</span>
+        </div>`).join('');
+      return `
+        <div class="step">
+          <div class="done-illustration">📆</div>
+          <h2 class="step-heading">Preview &amp; Confirm</h2>
+          <p class="step-sub">Your calendar will include <strong>${items.length} holiday${items.length === 1 ? '' : 's'}</strong>.</p>
+          <div class="summary-list">${rows || '<div class="empty-hint">No holidays selected.</div>'}</div>
+          <div class="success-banner" id="successBanner">🎉 Holiday calendar created successfully!</div>
+        </div>`;
+    }
+
+    /* ----- Render controller ----- */
+    function render() {
+      if (currentStep === 1) body.innerHTML = renderStep1();
+      else if (currentStep === 2) { body.innerHTML = renderStep2(); wireStep2(); }
+      else if (currentStep === 3) { body.innerHTML = renderStep3(); wireStep3(); }
+      else body.innerHTML = renderStep4();
+
+      progressFill.style.width = (currentStep / TOTAL_STEPS * 100) + '%';
+      progressLabel.textContent = `Step ${currentStep} of ${TOTAL_STEPS}`;
+
+      backBtn.disabled = currentStep === 1;
+      nextBtn.textContent = currentStep === TOTAL_STEPS ? 'Confirm & Create' : 'Next →';
+      // Step 2 requires at least one holiday selected overall.
+      nextBtn.disabled = (currentStep === 2 && selectedCount() === 0);
+    }
+
+    /* ----- Navigation ----- */
+    nextBtn.addEventListener('click', () => {
+      if (currentStep === 2 && selectedCount() === 0) return;
+      if (currentStep === TOTAL_STEPS) {
+        const banner = document.getElementById('successBanner');
+        if (banner) banner.style.display = 'block';
+        nextBtn.disabled = true;
+        nextBtn.textContent = 'Created ✓';
+        return;
+      }
+      currentStep++;
+      render();
+    });
+    backBtn.addEventListener('click', () => { if (currentStep > 1) { currentStep--; render(); } });
+
+    render();
+  </script>
+</body>
+</html>
