@@ -188,6 +188,56 @@
       padding: 14px 18px; font-weight: 600; font-size: 14px; margin-top: 16px; text-align: center;
     }
 
+    /* ---------- Two-Column Layout (Main + Tips) ---------- */
+    .wizard-content {
+      display: flex;
+      gap: 32px;
+      align-items: flex-start;
+    }
+
+    .wizard-main {
+      flex: 1;
+      min-width: 0;
+    }
+
+    .wizard-tips {
+      width: 280px;
+      flex-shrink: 0;
+      padding: 20px;
+      background: var(--gray-bg);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      max-height: 500px;
+      overflow-y: auto;
+    }
+
+    .wizard-tips-header {
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--gray-text);
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      margin-bottom: 16px;
+    }
+
+    .wizard-tips-content {
+      font-size: 14px;
+      line-height: 1.6;
+      color: var(--gray-text);
+    }
+
+    /* Responsive: Stack on smaller screens */
+    @media (max-width: 1024px) {
+      .wizard-content {
+        flex-direction: column;
+        gap: 24px;
+      }
+      .wizard-tips {
+        width: 100%;
+        max-height: none;
+      }
+    }
+
     /* ---------- Footer ---------- */
     .wizard-footer {
       display: flex; justify-content: space-between; gap: 14px;
@@ -422,12 +472,32 @@
         </div>`;
     }
 
+    /* ----- Layout wrapper: Two-column with tips panel ----- */
+    function wrapWithTips(content) {
+      return `
+        <div class="wizard-content">
+          <div class="wizard-main">${content}</div>
+          <div class="wizard-tips">
+            <div class="wizard-tips-header">💡 Tips</div>
+            <div class="wizard-tips-content">
+              <!-- Tips will be added here -->
+            </div>
+          </div>
+        </div>`;
+    }
+
     /* ----- Render controller ----- */
     function render() {
-      if (currentStep === 1) body.innerHTML = renderStep1();
-      else if (currentStep === 2) { body.innerHTML = renderStep2(); wireStep2(); }
-      else if (currentStep === 3) { body.innerHTML = renderStep3(); wireStep3(); }
-      else body.innerHTML = renderStep4();
+      let content = '';
+      if (currentStep === 1) content = renderStep1();
+      else if (currentStep === 2) { content = renderStep2(); }
+      else if (currentStep === 3) { content = renderStep3(); }
+      else content = renderStep4();
+
+      body.innerHTML = wrapWithTips(content);
+
+      if (currentStep === 2) wireStep2();
+      else if (currentStep === 3) wireStep3();
 
       progressFill.style.width = (currentStep / TOTAL_STEPS * 100) + '%';
       progressLabel.textContent = `Step ${currentStep} of ${TOTAL_STEPS}`;
